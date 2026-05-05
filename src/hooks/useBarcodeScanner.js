@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import Quagga from '@ericblade/quagga2';
 
-export const useBarcodeScanner = ({ onDetected, scannerEnabled = true }) => {
+export const useBarcodeScanner = ({ onDetected, scannerEnabled = true, facingMode = 'environment' }) => {
   const [isInitializing, setIsInitializing] = useState(true);
   const [error, setError] = useState(null);
   const lastScanTime = useRef(0);
@@ -26,6 +26,8 @@ export const useBarcodeScanner = ({ onDetected, scannerEnabled = true }) => {
     const scannerElement = document.querySelector('#scanner');
     if (!scannerElement) return;
 
+    setIsInitializing(true);
+
     Quagga.init(
       {
         inputStream: {
@@ -33,7 +35,7 @@ export const useBarcodeScanner = ({ onDetected, scannerEnabled = true }) => {
           constraints: {
             width: { min: 640 },
             height: { min: 480 },
-            facingMode: 'environment',
+            facingMode: facingMode, // Dynamic facing mode
             aspectRatio: { min: 1, max: 2 },
           },
           target: scannerElement,
@@ -67,15 +69,8 @@ export const useBarcodeScanner = ({ onDetected, scannerEnabled = true }) => {
       const code = data.codeResult.code;
       const now = Date.now();
 
-      // Debounce: ignore repeated scans for 2 seconds
       if (now - lastScanTime.current < 2000) return;
-
       lastScanTime.current = now;
-      
-      // Haptic feedback if supported
-      if (navigator.vibrate) {
-        navigator.vibrate(100);
-      }
       
       onDetected(code);
     };
@@ -83,16 +78,13 @@ export const useBarcodeScanner = ({ onDetected, scannerEnabled = true }) => {
     Quagga.onDetected(handleDetected);
 
     return () => {
-      if (isInitialized.current) {
-        Quagga.stop();
-      }
+      Quagga.stop();
       Quagga.offDetected(handleDetected);
       isInitialized.current = false;
       quaggaActive.current = false;
     };
-  }, []); // Only run once on mount
+  }, [facingMode]); // Re-init on camera switch
 
-  // Toggle start/stop based on scannerEnabled prop
   useEffect(() => {
     if (scannerEnabled) {
       startScanner();
