@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 
-const HISTORY_KEY = 'nutriar_scan_history_v2';
+const HISTORY_KEY = 'nutriar_scan_history_v3';
 
-export const useScanHistory = (limit = 10) => {
+export const useScanHistory = (limit = 5) => {
   const [history, setHistory] = useState([]);
 
   useEffect(() => {
@@ -20,7 +20,19 @@ export const useScanHistory = (limit = 10) => {
     setHistory(prev => {
       // Remove duplicate if exists
       const filtered = prev.filter(item => item.barcode !== product.barcode);
-      const newHistory = [{ ...product, timestamp: Date.now() }, ...filtered].slice(0, limit);
+      const newHistory = [
+        { 
+          barcode: product.barcode,
+          name: product.name,
+          brand: product.brand,
+          calories: product.calories,
+          healthScore: product.healthScore,
+          confidence: product.confidence,
+          timestamp: Date.now() 
+        }, 
+        ...filtered
+      ].slice(0, limit);
+      
       localStorage.setItem(HISTORY_KEY, JSON.stringify(newHistory));
       return newHistory;
     });

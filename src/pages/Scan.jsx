@@ -1,0 +1,123 @@
+import React, { useState, useCallback, useEffect } from 'react';
+import BarcodeScanner from '../components/BarcodeScanner';
+import ProductSheet from '../components/ProductSheet';
+import ComparisonSheet from '../components/ComparisonSheet';
+import { useBarcodeScanner } from '../hooks/useBarcodeScanner';
+import { useScanHistory } from '../hooks/useScanHistory';
+import { useDailyNutrition } from '../hooks/useDailyNutrition';
+import { useAnalytics } from '../hooks/useAnalytics';
+import { processBarcode } from '../services/productEngine';
+
+const Scan = ({ userGoal }) => {
+  const [detectedBarcode, setDetectedBarcode] = useState(null);
+  const [activeProduct, setActiveProduct] = useState(null);
+  const [scannerEnabled, setScannerEnabled] = useState(true);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const [comparisonTarget, setComparisonTarget] = useState(null);
+  const [isComparing, setIsComparing] = useState(false);
+
+  const { saveToHistory } = useScanHistory(5);
+  const { addConsumption } = useDailyNutrition();
+  const { trackScan } = useAnalytics();
+
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  const handleDetected = useCallback(async (barcode) => {
+    if (isSearching || isSheetOpen || isComparing) return;
+    
+    setDetectedBarcode(barcode);
+    setScannerEnabled(false);
+    setIsSearching(true);
+    
+    // Use the Intelligent Product Engine
+    const product = await processBarcode(barcode, userGoal);
+    
+    if (product) {
+      setActiveProduct(product);
+      saveToHistory(product);
+      addConsumption(product);
+      trackScan(product.healthScore, product.source, isOffline);
+      
+      if (comparisonTarget) {
+        setIsComparing(true);
+      } else {
+        setIsSheetOpen(true);
+      }
+    } else {
+      setActiveProduct(null);
+      setIsSheetOpen(true);
+    }
+    
+    setIsSearching(false);
+  }, [saveToHistory, addConsumption, trackScan, isSearching, isSheetOpen, isComparing, isOffline, comparisonTarget, userGoal]);
+
+  const { isInitializing, error } = useBarcodeScanner({
+    onDetected: handleDetected,
+    scannerEnabled: scannerEnabled,
+  });
+
+  const handleCloseSheet = useCallback(() => {
+    setIsSheetOpen(false);
+    setIsComparing(false);
+    setComparisonTarget(null);
+    setScannerEnabled(true);
+    setDetectedBarcode(null);
+    setActiveProduct(null);
+  }, []);
+
+  const startComparison = (product) => {
+    setComparisonTarget(product);
+    setIsSheetOpen(false);
+    setScannerEnabled(true);
+  };
+
+  return (
+    <div className="flex-1 relative flex flex-col bg-black">
+      <BarcodeScanner 
+        isInitializing={isInitializing} 
+        error={error} 
+        isSearching={isSearching}
+        detectedBarcode={detectedBarcode}
+      />
+
+      {/* Comparison Mode Indicator */}
+      {comparisonTarget && (
+        <div className="absolute top-24 left-1/2 -translate-x-1/2 z-40 px-6 py-3 bg-secondary/20 backdrop-blur-xl rounded-full shadow-neon-secondary border border-secondary/30 flex items-center gap-3 animate-pulse">
+          <span className="material-symbols-outlined text-secondary">compare_arrows</span>
+          <p className="text-secondary text-xs font-bold uppercase tracking-widest">Scan item to compare</p>
+        </div>
+      )}
+
+      {/* Product Information Sheet */}
+      <ProductSheet 
+        product={activeProduct} 
+        barcode={detectedBarcode}
+        isOpen={isSheetOpen} 
+        onClose={handleCloseSheet}
+        onCompare={startComparison}
+        userGoal={userGoal}
+      />
+
+      {/* Comparison Sheet */}
+      <ComparisonSheet 
+        productA={comparisonTarget}
+        productB={activeProduct}
+        isOpen={isComparing}
+        onClose={handleCloseSheet}
+      />
+    </div>
+  );
+};
+
+export default Scan;
