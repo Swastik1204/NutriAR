@@ -36,11 +36,14 @@ const Scan = ({ userGoal }) => {
   const handleDetected = useCallback(async (barcode) => {
     if (isSearching || isSheetOpen || isComparing) return;
     
+    // 1. Haptic / Sound Feedback
+    if ('vibrate' in navigator) navigator.vibrate(50);
+    
     setDetectedBarcode(barcode);
     setScannerEnabled(false);
     setIsSearching(true);
     
-    // Use the Intelligent Product Engine
+    // 2. Intelligent Product Engine
     const product = await processBarcode(barcode, userGoal);
     
     if (product) {
@@ -49,6 +52,7 @@ const Scan = ({ userGoal }) => {
       addConsumption(product);
       trackScan(product.healthScore, product.source, isOffline);
       
+      // 3. Fast Auto-Open
       if (comparisonTarget) {
         setIsComparing(true);
       } else {

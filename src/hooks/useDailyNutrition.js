@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 
-const DAILY_KEY = 'nutriar_daily_v1';
+const DAILY_KEY = 'nutriar_daily_v2';
 
 export const useDailyNutrition = () => {
   const [dailyStats, setDailyStats] = useState({
@@ -17,9 +17,11 @@ export const useDailyNutrition = () => {
     const saved = localStorage.getItem(DAILY_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
-      // Reset if date changed
       if (parsed.date !== new Date().toDateString()) {
-        const reset = { ...dailyStats, date: new Date().toDateString() };
+        const reset = { 
+          calories: 0, protein: 0, carbs: 0, fat: 0, sugar: 0, 
+          items: [], date: new Date().toDateString() 
+        };
         localStorage.setItem(DAILY_KEY, JSON.stringify(reset));
         setDailyStats(reset);
       } else {
@@ -44,5 +46,15 @@ export const useDailyNutrition = () => {
     });
   }, []);
 
-  return { dailyStats, addConsumption };
+  const dailyInsights = useMemo(() => {
+    const insights = [];
+    if (dailyStats.sugar > 25) insights.push("You've exceeded your recommended sugar intake today.");
+    if (dailyStats.calories > 2000) insights.push("Approaching daily calorie limit.");
+    if (dailyStats.protein < 30 && dailyStats.items.length > 3) insights.push("Protein intake is relatively low today.");
+    if (dailyStats.fat > 60) insights.push("High fat intake detected today.");
+    
+    return insights;
+  }, [dailyStats]);
+
+  return { dailyStats, addConsumption, dailyInsights };
 };

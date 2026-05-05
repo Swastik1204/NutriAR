@@ -2,10 +2,14 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useScanHistory } from '../hooks/useScanHistory';
 import { useDailyNutrition } from '../hooks/useDailyNutrition';
+import { useUserPatterns } from '../hooks/useUserPatterns';
 
 const Home = ({ userGoal, onOpenGoalPicker }) => {
   const { history } = useScanHistory(5);
-  const { dailyStats } = useDailyNutrition();
+  const { dailyStats, dailyInsights } = useDailyNutrition();
+  const { behaviorInsights } = useUserPatterns(history);
+
+  const allInsights = [...dailyInsights, ...behaviorInsights];
 
   return (
     <div className="flex-1 overflow-y-auto pb-24 scrollbar-hide">
@@ -50,7 +54,7 @@ const Home = ({ userGoal, onOpenGoalPicker }) => {
 
         {/* Quick Actions */}
         <div className="grid grid-cols-2 gap-4">
-          <Link to="/scan" className="p-6 rounded-[32px] bg-primary/10 border border-primary/30 flex flex-col gap-4 group hover:bg-primary/20 transition-all active:scale-95">
+          <Link to="/scan" className="p-6 rounded-[32px] bg-primary/10 border border-primary/30 flex flex-col gap-4 group hover:bg-primary/20 transition-all active:scale-95 shadow-neon-primary">
              <div className="w-12 h-12 rounded-2xl bg-primary text-on-primary flex items-center justify-center shadow-neon-primary group-hover:scale-110 transition-transform">
                 <span className="material-symbols-outlined text-3xl">qr_code_scanner</span>
              </div>
@@ -65,11 +69,29 @@ const Home = ({ userGoal, onOpenGoalPicker }) => {
         </div>
       </section>
 
+      {/* Proactive Insights */}
+      {allInsights.length > 0 && (
+        <section className="px-8 mb-8">
+           <div className="p-6 rounded-[32px] bg-secondary/10 border border-secondary/20 flex flex-col gap-3">
+              <div className="flex items-center gap-2 mb-1">
+                 <span className="material-symbols-outlined text-secondary text-xl">insights</span>
+                 <p className="text-[10px] font-bold text-secondary uppercase tracking-[0.2em]">Daily Intelligence</p>
+              </div>
+              {allInsights.map((insight, idx) => (
+                <div key={idx} className="flex gap-3 items-start animate-fade-in" style={{ animationDelay: `${idx * 100}ms` }}>
+                   <div className="w-1.5 h-1.5 rounded-full bg-secondary mt-1.5 flex-shrink-0" />
+                   <p className="text-sm text-white/90 leading-snug font-medium">{insight}</p>
+                </div>
+              ))}
+           </div>
+        </section>
+      )}
+
       {/* Recent Activity */}
-      <section className="p-8 pt-4">
+      <section className="p-8 pt-0">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-headline font-bold text-white">Recent Scans</h2>
-          <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Top 5</span>
+          <h2 className="text-xl font-headline font-bold text-white">Recent Activity</h2>
+          <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">History</span>
         </div>
         <div className="space-y-4">
           {history.length === 0 ? (
@@ -78,35 +100,20 @@ const Home = ({ userGoal, onOpenGoalPicker }) => {
             </div>
           ) : (
             history.map((item, idx) => (
-              <div key={idx} className="flex items-center gap-4 p-4 rounded-3xl bg-white/5 border border-white/5 hover:border-primary/30 transition-colors">
-                 <div className="w-12 h-12 rounded-xl bg-surface-container-highest flex items-center justify-center">
-                    <span className="material-symbols-outlined text-primary/50 text-2xl">barcode</span>
+              <div key={idx} className="flex items-center gap-4 p-4 rounded-3xl bg-white/5 border border-white/5 hover:border-primary/30 transition-colors group">
+                 <div className="w-12 h-12 rounded-xl bg-surface-container-highest flex items-center justify-center text-primary/40 group-hover:text-primary transition-colors">
+                    <span className="material-symbols-outlined text-2xl">qr_code_scanner</span>
                  </div>
                  <div className="flex-1 min-w-0">
                     <p className="font-bold text-white truncate">{item.name}</p>
                     <p className="text-[10px] opacity-50 uppercase mt-0.5">{item.brand}</p>
                  </div>
-                 <div className={`px-2 py-1 rounded-md text-[9px] font-black ${item.healthScore >= 70 ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
+                 <div className={`px-2 py-1 rounded-md text-[9px] font-black ${item.healthScore >= 70 ? 'bg-success/10 text-success shadow-neon-success' : 'bg-warning/10 text-warning'}`}>
                     {item.healthScore}
                  </div>
               </div>
             ))
           )}
-        </div>
-      </section>
-
-      {/* Smart Tip */}
-      <section className="p-8 pt-0">
-        <div className="p-6 rounded-[32px] bg-secondary/10 border border-secondary/20 flex gap-4 items-start">
-           <span className="material-symbols-outlined text-secondary text-3xl">lightbulb</span>
-           <div>
-              <p className="text-xs font-bold text-secondary uppercase tracking-widest mb-1">Smart Tip</p>
-              <p className="text-sm text-white/80 leading-relaxed">
-                {dailyStats.sugar > 20 
-                  ? "Your sugar intake is rising today. Try swapping snacks for fresh fruit."
-                  : "Excellent hydration focus! Keep up the balanced nutrient intake."}
-              </p>
-           </div>
         </div>
       </section>
     </div>
