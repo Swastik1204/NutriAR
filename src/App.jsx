@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
 import Scan from './pages/Scan';
 import ProductList from './pages/ProductList';
+import AddProduct from './pages/AddProduct';
 import BottomNav from './components/BottomNav';
 import ErrorBoundary from './components/ErrorBoundary';
 
@@ -58,6 +59,7 @@ function AppContent() {
             <Route path="/" element={<Home userGoal={userGoal} onOpenGoalPicker={() => setShowGoalPicker(true)} />} />
             <Route path="/scan" element={<Scan userGoal={userGoal} />} />
             <Route path="/products" element={<ProductList />} />
+            <Route path="/add-product/:barcode" element={<AddProduct />} />
           </Routes>
         </div>
 

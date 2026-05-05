@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useMemo, memo } from 'react';
+import { Link } from 'react-router-dom';
 import { getHealthColor } from '../utils/nutrition';
 import { generateInsights } from '../utils/healthInsights';
 import { calculateConfidence, getConfidenceColor } from '../utils/confidenceScore';
@@ -65,9 +66,17 @@ const ProductSheet = ({ product, barcode, isOpen, onClose, onCompare, userGoal =
                     onClick={onWebSearch}
                   >
                     <span className="material-symbols-outlined text-xl group-hover:animate-bounce">travel_explore</span>
-                    Search Web Data
+                    Search Online
                   </button>
-                  <button className="btn btn-outline border-white/20 text-white/50 w-full rounded-2xl h-14 font-bold hover:bg-white/5" onClick={onClose}>
+                  <Link 
+                    to={`/add-product/${barcode}`}
+                    className="btn glass-panel w-full rounded-2xl h-14 text-base font-bold text-white border-white/10"
+                    onClick={onClose}
+                  >
+                    <span className="material-symbols-outlined text-xl">add_circle</span>
+                    Add Product
+                  </Link>
+                  <button className="btn btn-ghost text-on-surface-variant opacity-50" onClick={onClose}>
                     Close
                   </button>
                 </div>
