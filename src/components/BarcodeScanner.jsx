@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Quagga from '@ericblade/quagga2';
+import ScannerFX from './ScannerFX';
 
 const BarcodeScanner = ({ 
   isInitializing, 
@@ -48,6 +49,9 @@ const BarcodeScanner = ({
     <div className="relative w-full h-full overflow-hidden bg-black flex flex-col items-center justify-center">
       {/* Quagga Target Container */}
       <div id="scanner" className="absolute inset-0 w-full h-full [&>video]:w-full [&>video]:h-full [&>video]:object-cover" />
+
+      {/* Fake AR Overlay */}
+      <ScannerFX isDetected={!!detectedBarcode} />
 
       {/* Detection Flash Overlay */}
       {showFlash && <div className="absolute inset-0 bg-white/40 z-40 pointer-events-none animate-fade-out" />}
