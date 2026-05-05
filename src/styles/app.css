@@ -1,11 +1,11 @@
-@import url('https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400..900;1,7..72,400..900&family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800;900&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* ───────────────────────────────────────────────
-   Base resets — Terra Organic
+   Base resets — Midnight Neon
    ─────────────────────────────────────────────── */
 
 html,
@@ -19,14 +19,15 @@ body,
 
 body {
   overflow: clip;
-  font-family: 'Nunito Sans', sans-serif;
-  background: #faf6f0;
-  color: #2e3230;
+  font-family: 'Inter', sans-serif;
+  background: #050505;
+  color: #e3e3e3;
   -webkit-tap-highlight-color: transparent;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Literata', serif;
+  font-family: 'Outfit', sans-serif;
+  letter-spacing: -0.02em;
 }
 
 *,
@@ -35,438 +36,42 @@ h1, h2, h3, h4, h5, h6 {
   box-sizing: border-box;
 }
 
-button,
-input,
-select,
-textarea {
-  font: inherit;
-}
-
 /* Material Symbols config */
 .material-symbols-outlined {
-  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
 }
 
 /* ───────────────────────────────────────────────
-   Smooth scrollbar — Terra
+   Custom Scrollbar
    ─────────────────────────────────────────────── */
 
-.app-shell > main {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(74, 124, 89, 0.15) transparent;
+::-webkit-scrollbar {
+  width: 4px;
 }
 
-.app-shell > main::-webkit-scrollbar {
-  width: 5px;
-}
-
-.app-shell > main::-webkit-scrollbar-track {
+::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.app-shell > main::-webkit-scrollbar-thumb {
-  background: rgba(74, 124, 89, 0.15);
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 229, 255, 0.2);
   border-radius: 999px;
 }
 
-/* ───────────────────────────────────────────────
-   Camera view (direct camera feed + overlay)
-   ─────────────────────────────────────────────── */
-
-.camera-view {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  background: #111;
-  touch-action: none;
-  overscroll-behavior: none;
-}
-
-.camera-view__video {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  z-index: 0;
-}
-
-.camera-view canvas {
-  touch-action: none;
-}
-
-.camera-view__overlay {
-  display: none; /* replaced by ar-overlay */
-}
-
-/* True AR Overlay centered on bounding box */
-.camera-view__ar-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  pointer-events: none;
-  z-index: 10;
-}
-
-/* Animated detection ring */
-.camera-view__ring {
-  border-radius: 12px; /* not round, but rounded box */
-  border: 3px solid var(--accent, #60a5fa);
-  box-shadow:
-    0 0 30px color-mix(in srgb, var(--accent) 40%, transparent),
-    inset 0 0 20px color-mix(in srgb, var(--accent) 20%, transparent);
-  animation: ring-breathe 2s ease-in-out infinite;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.camera-view__ring--locked {
-  border-width: 4px;
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
-  box-shadow:
-    0 0 50px color-mix(in srgb, var(--accent) 60%, transparent),
-    inset 0 0 40px color-mix(in srgb, var(--accent) 30%, transparent);
-  animation: ring-locked-pulse 1.5s ease-in-out infinite;
-}
-
-@keyframes ring-breathe {
-  0%, 100% { transform: scale(1); opacity: 0.7; }
-  50% { transform: scale(1.04); opacity: 1; }
-}
-
-@keyframes ring-locked-pulse {
-  0%, 100% { transform: scale(1); opacity: 0.85; }
-  50% { transform: scale(1.02); opacity: 1; }
-}
-
-/* Floating Info Card */
-.camera-view__info-card {
-  text-align: center;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(12px);
-  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
-  border-radius: 16px;
-  padding: 10px 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  transform: translateY(0);
-  animation: float-up-down 3s ease-in-out infinite;
-}
-
-.camera-view__dish-name {
-  font-family: 'Literata', serif;
-  font-size: 1.25rem;
-  font-weight: 800;
-  color: #fff;
-  letter-spacing: -0.02em;
-  margin: 0;
-}
-
-.camera-view__confidence {
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: color-mix(in srgb, var(--accent) 80%, white);
-  margin-top: 2px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-/* Floating Ingredient Chips */
-.camera-view__ingredient-chip {
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(8px);
-  border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
-  border-radius: 999px;
-  padding: 6px 12px;
-  color: #fff;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  white-space: nowrap;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-  transition: all 0.3s ease;
-  animation: float-up-down 4s ease-in-out infinite reverse;
-}
-
-@keyframes float-up-down {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
-}
-
-/* Lock/unlock button */
-.camera-view__lock-btn {
-  position: absolute;
-  bottom: 16px;
-  right: 16px;
-  z-index: 15;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  border-radius: 999px;
-  border: 1.5px solid rgba(255, 255, 255, 0.25);
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(12px);
-  color: #fff;
-  cursor: pointer;
-  transition: all 0.25s ease;
-}
-
-.camera-view__lock-btn:hover {
-  background: rgba(0, 0, 0, 0.6);
-  border-color: rgba(255, 255, 255, 0.4);
-}
-
-.camera-view__lock-btn:active {
-  transform: scale(0.96);
-}
-
-.camera-view__lock-btn--locked {
-  background: rgba(74, 124, 89, 0.5);
-  border-color: rgba(74, 124, 89, 0.7);
-}
-
-.camera-view__lock-btn--locked:hover {
-  background: rgba(74, 124, 89, 0.65);
-}
-
-/* Camera loading state */
-.camera-view__loading {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: #111;
-}
-
-/* Legacy — keep for backward compat */
-.ar-stage {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  background: #1a1a1a;
-}
-
-/* ───────────────────────────────────────────────
-   Scanner overlay (top / center / bottom HUD)
-   ─────────────────────────────────────────────── */
-
-.scanner-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 20;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 1rem;
-  pointer-events: none;
-}
-
-.scanner-overlay__top,
-.scanner-overlay__bottom {
-  pointer-events: none;
-}
-
-.scanner-overlay__center {
-  display: grid;
-  flex: 1 1 auto;
-  place-items: center;
-}
-
-/* Scanner frame (animated target reticle) — Terra */
-
-.scanner-frame {
-  position: relative;
-  width: min(72vw, 320px);
-  aspect-ratio: 3 / 4;
-  border-radius: 2rem;
-  border: 1.5px solid rgba(255, 255, 255, 0.4);
-  box-shadow:
-    0 0 44px rgba(74, 124, 89, 0.2),
-    inset 0 0 30px rgba(255, 255, 255, 0.05);
-  transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.scanner-frame--detected {
-  width: 96px;
-  height: 96px;
-  aspect-ratio: 1;
-  border-radius: 9999px;
-  border-color: rgba(74, 124, 89, 0.6);
-  background: rgba(74, 124, 89, 0.12);
-  box-shadow:
-    0 0 44px rgba(74, 124, 89, 0.3),
-    0 0 120px rgba(74, 124, 89, 0.1);
-}
-
-.scanner-frame__icon {
-  position: absolute;
-  inset: 50% auto auto 50%;
-  transform: translate(-50%, -50%);
-  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.3));
-}
-
-.scanner-frame__scanline {
-  position: absolute;
-  left: 1rem;
-  top: 33%;
-  height: 2px;
-  border-radius: 9999px;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.7), transparent);
-  animation: scanline 1.7s ease-in-out infinite;
-}
-
-.scanner-frame--idle .scanner-frame__scanline {
-  opacity: 0.45;
-  width: 55%;
-}
-
-.scanner-frame--scanning .scanner-frame__scanline {
-  width: 72%;
-}
-
-.scanner-frame--detected .scanner-frame__scanline {
+.scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
-
-/* ───────────────────────────────────────────────
-   Detection bottom sheet — Terra
-   ─────────────────────────────────────────────── */
-
-.detection-sheet {
-  position: fixed;
-  inset: 0;
-  z-index: 30;
-  pointer-events: none;
-}
-
-.detection-sheet__backdrop {
-  position: absolute;
-  inset: 0;
-  background: rgba(46, 50, 48, 0.4);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  transition: opacity 220ms ease;
-}
-
-.detection-sheet__panel {
-  position: absolute;
-  left: 50%;
-  bottom: calc(4.5rem + env(safe-area-inset-bottom));
-  z-index: 31;
-  transform: translate(-50%, 110%);
-  transition: transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
-  pointer-events: auto;
-  width: min(calc(100vw - 1.5rem), 48rem);
-  background: rgba(250, 246, 240, 0.92);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(250, 246, 240, 0.6);
-  border-radius: 1.5rem;
-  box-shadow: 0 16px 40px rgba(46, 50, 48, 0.15);
-}
-
-.detection-sheet--open {
-  pointer-events: auto;
-}
-
-.detection-sheet--open .detection-sheet__panel {
-  transform: translate(-50%, 0);
-}
-
-.detection-sheet--closed .detection-sheet__panel {
-  transform: translate(-50%, 110%);
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 /* ───────────────────────────────────────────────
-   App shell — Terra
-   ─────────────────────────────────────────────── */
-
-.app-shell {
-  height: 100dvh;
-  overflow: clip;
-}
-
-.app-shell > main {
-  min-height: 0;
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* ───────────────────────────────────────────────
-   Error boundary — Terra
-   ─────────────────────────────────────────────── */
-
-.error-boundary {
-  position: fixed;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  padding: 24px;
-  color: #2e3230;
-  background: #faf6f0;
-}
-
-.error-boundary__panel {
-  width: min(92vw, 440px);
-  padding: 24px;
-  background: #ffffff;
-  border: 1px solid rgba(184, 50, 48, 0.2);
-  border-radius: 24px;
-  box-shadow: 0 4px 20px rgba(46, 50, 48, 0.06);
-}
-
-.error-boundary__eyebrow {
-  margin: 0 0 10px;
-  color: #b83230;
-  font-family: 'Nunito Sans', sans-serif;
-  font-size: 0.78rem;
-  font-weight: 800;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
-
-.error-boundary h1 {
-  margin: 0;
-  font-family: 'Literata', serif;
-  font-size: 2rem;
-  line-height: 1;
-  color: #2e3230;
-}
-
-.error-boundary__copy {
-  margin: 12px 0 18px;
-  color: #4a4e4a;
-  line-height: 1.55;
-}
-
-.error-boundary__button {
-  min-height: 44px;
-  padding: 0 16px;
-  border: 0;
-  border-radius: 12px;
-  background: #4a7c59;
-  color: #ffffff;
-  font-weight: 800;
-  cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.error-boundary__button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 30px rgba(74, 124, 89, 0.2);
-}
-
-/* ───────────────────────────────────────────────
-   Animations — Terra
+   Animations
    ─────────────────────────────────────────────── */
 
 @keyframes scanline {
-  0%,
-  100% {
+  0%, 100% {
     transform: translateY(-72px);
     opacity: 0.25;
   }
@@ -477,55 +82,40 @@ textarea {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(40px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes pulseGlow {
-  0%, 100% { box-shadow: 0 0 12px rgba(74, 124, 89, 0.1); }
-  50% { box-shadow: 0 0 28px rgba(74, 124, 89, 0.2); }
-}
-
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  0%, 100% { box-shadow: 0 0 15px rgba(0, 229, 255, 0.1); }
+  50% { box-shadow: 0 0 35px rgba(0, 229, 255, 0.3); }
 }
 
 @keyframes float {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
+  50% { transform: translateY(-4px); }
 }
 
-@keyframes slide-in-left {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(0); }
+@keyframes scan-glow {
+  0%, 100% { box-shadow: inset 0 0 20px rgba(0, 229, 255, 0.1), 0 0 20px rgba(0, 229, 255, 0.1); }
+  50% { box-shadow: inset 0 0 40px rgba(0, 229, 255, 0.3), 0 0 40px rgba(0, 229, 255, 0.3); }
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.4s ease-out both;
+  animation: fadeIn 0.5s cubic-bezier(0.2, 0, 0, 1) both;
+}
+
+.animate-fade-out {
+  animation: fadeIn 0.3s cubic-bezier(0.2, 0, 0, 1) reverse both;
 }
 
 .animate-slide-up {
-  animation: slideUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.animate-slide-in-left {
-  animation: slide-in-left 0.4s cubic-bezier(0.2, 0, 0, 1) forwards;
-}
-
-@keyframes fadeSlideIn {
-  from { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
-  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-}
-
-@keyframes pulseOpacity {
-  0%, 100% { opacity: 0.85; }
-  50%      { opacity: 0.5; }
+  animation: slideUp 0.6s cubic-bezier(0.2, 0, 0, 1) both;
 }
 
 .animate-pulse-glow {
@@ -533,115 +123,77 @@ textarea {
 }
 
 .animate-float {
-  animation: float 3s ease-in-out infinite;
+  animation: float 4s ease-in-out infinite;
 }
 
-.shimmer-bg {
-  background: linear-gradient(90deg, transparent 0%, rgba(74, 124, 89, 0.06) 50%, transparent 100%);
-  background-size: 200% 100%;
-  animation: shimmer 2s linear infinite;
+.animate-scan {
+  animation: scanline 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
-/* ───────────────────────────────────────────────
-   Terra warm card
-   ─────────────────────────────────────────────── */
-
-.terra-card {
-  background: #f0ece4;
-  border: 1px solid rgba(196, 200, 188, 0.3);
-  border-radius: 1rem;
-  box-shadow: 0 4px 20px rgba(46, 50, 48, 0.04);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.terra-card:hover {
-  box-shadow: 0 8px 24px rgba(46, 50, 48, 0.08);
+.animate-scan-glow {
+  animation: scan-glow 2s ease-in-out infinite;
 }
 
 /* ───────────────────────────────────────────────
-   Terra glass card (for overlays on camera)
+   Glassmorphism Utilities
    ─────────────────────────────────────────────── */
+
+.glass-panel {
+  background: rgba(10, 10, 10, 0.65);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
 
 .glass-card {
-  background: rgba(250, 246, 240, 0.88);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(250, 246, 240, 0.6);
-  border-radius: 1rem;
-  box-shadow: 0 4px 20px rgba(46, 50, 48, 0.06);
+  background: rgba(18, 18, 18, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05), 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
-/* ───────────────────────────────────────────────
-   Text gradient — Terra green
-   ─────────────────────────────────────────────── */
-
 .text-gradient {
-  background: linear-gradient(135deg, #4a7c59, #78a886);
+  background: linear-gradient(135deg, #00e5ff, #00e676);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 /* ───────────────────────────────────────────────
-   Metric card hover effect — Terra
+   Background Blobs
    ─────────────────────────────────────────────── */
 
-.metric-card {
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-}
-
-.metric-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(46, 50, 48, 0.08);
-  border-color: rgba(74, 124, 89, 0.2);
-}
-
-/* ───────────────────────────────────────────────
-   Decorative background blobs — Terra
-   ─────────────────────────────────────────────── */
-
-.terra-bg-blobs {
+.neon-bg-blobs {
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 12rem;
+  inset: 0;
   z-index: -1;
-  opacity: 0.3;
   pointer-events: none;
+  overflow: hidden;
+  background: #050505;
 }
 
-.terra-bg-blobs::before {
+.neon-bg-blobs::before {
   content: '';
   position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 40%;
-  height: 100%;
-  background: linear-gradient(to top right, #78a886, transparent);
-  filter: blur(80px);
-  border-radius: 9999px;
-  transform: translateY(24px) translateX(-12px);
+  top: -10%;
+  left: -10%;
+  width: 60vw;
+  height: 60vw;
+  background: radial-gradient(circle, rgba(0, 229, 255, 0.08) 0%, transparent 70%);
+  border-radius: 50%;
+  filter: blur(60px);
 }
 
-.terra-bg-blobs::after {
+.neon-bg-blobs::after {
   content: '';
   position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 40%;
-  height: 100%;
-  background: linear-gradient(to top left, #c4a66a, transparent);
-  filter: blur(80px);
-  border-radius: 9999px;
-  transform: translateY(24px) translateX(12px);
-}
-
-@keyframes scan {
-  0%, 100% { transform: translateY(0); opacity: 0.8; }
-  50% { transform: translateY(256px); opacity: 1; }
-}
-
-.animate-scan {
-  animation: scan 2.5s ease-in-out infinite;
+  bottom: -10%;
+  right: -10%;
+  width: 60vw;
+  height: 60vw;
+  background: radial-gradient(circle, rgba(179, 136, 255, 0.08) 0%, transparent 70%);
+  border-radius: 50%;
+  filter: blur(60px);
 }
