@@ -1,7 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import Quagga from '@ericblade/quagga2';
 
-const BarcodeScanner = ({ isInitializing, error, isSearching, detectedBarcode }) => {
+const BarcodeScanner = ({ 
+  isInitializing, 
+  error, 
+  isSearching, 
+  detectedBarcode,
+  devices = [],
+  currentDeviceIndex = 0,
+  onSwitchCamera
+}) => {
   const [torchOn, setTorchOn] = useState(false);
   const [showFlash, setShowFlash] = useState(false);
 
@@ -34,6 +42,8 @@ const BarcodeScanner = ({ isInitializing, error, isSearching, detectedBarcode })
     return "Align barcode in frame";
   };
 
+  const activeDeviceLabel = devices[currentDeviceIndex]?.label || "Camera";
+
   return (
     <div className="relative w-full h-full overflow-hidden bg-black flex flex-col items-center justify-center">
       {/* Quagga Target Container */}
@@ -42,10 +52,28 @@ const BarcodeScanner = ({ isInitializing, error, isSearching, detectedBarcode })
       {/* Detection Flash Overlay */}
       {showFlash && <div className="absolute inset-0 bg-white/40 z-40 pointer-events-none animate-fade-out" />}
 
+      {/* Camera Switch UI */}
+      {!isInitializing && !error && devices.length > 1 && (
+        <div className="absolute top-24 right-8 z-50 flex flex-col items-end gap-2 pointer-events-none">
+          <button 
+            onClick={(e) => { e.preventDefault(); onSwitchCamera(); }}
+            className="pointer-events-auto w-12 h-12 rounded-full glass-panel flex items-center justify-center text-white/80 hover:bg-white/10 active:scale-90 transition-all border border-white/10 shadow-glass"
+            title="Switch Camera"
+          >
+            <span className="material-symbols-outlined text-2xl">flip_camera_ios</span>
+          </button>
+          <div className="px-3 py-1 rounded-lg bg-black/40 backdrop-blur-md border border-white/5 shadow-glass">
+            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/40 whitespace-nowrap">
+              {activeDeviceLabel.length > 20 ? activeDeviceLabel.substring(0, 17) + '...' : activeDeviceLabel}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Overlay UI */}
       <div className="relative z-10 w-full h-full flex flex-col items-center justify-between pointer-events-none p-8 py-12">
         {/* Top Status */}
-        <div className={`transition-all duration-300 px-6 py-3 rounded-full border flex items-center gap-2 glass-panel shadow-glass ${
+        <div className={`transition-all duration-300 px-6 py-3 rounded-full border flex items-center gap-2 glass-panel shadow-glass mt-12 ${
           detectedBarcode ? 'border-success text-success shadow-neon-tertiary' : 'border-primary/30 text-primary shadow-neon-primary'
         }`}>
           <span className={`material-symbols-outlined text-lg ${!detectedBarcode && 'animate-pulse'}`}>
@@ -78,7 +106,7 @@ const BarcodeScanner = ({ isInitializing, error, isSearching, detectedBarcode })
         </div>
 
         {/* Bottom Controls */}
-        <div className="w-full flex flex-col items-center gap-6">
+        <div className="w-full flex flex-col items-center gap-6 mb-24">
            <div className="glass-panel px-5 py-2.5 rounded-2xl flex items-center gap-3">
              <span className="material-symbols-outlined text-primary/70 text-sm">sensors</span>
              <p className="text-primary/90 text-[10px] font-bold uppercase tracking-widest">Live Analysis Active</p>

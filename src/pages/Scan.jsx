@@ -84,7 +84,13 @@ const Scan = ({ userGoal }) => {
     setIsSearchingWeb(false);
   }, [detectedBarcode, isSearchingWeb, userGoal, saveToHistory, addConsumption, trackScan, isOffline]);
 
-  const { isInitializing, error } = useBarcodeScanner({
+  const { 
+    isInitializing, 
+    error, 
+    devices, 
+    currentDeviceIndex, 
+    switchCamera 
+  } = useBarcodeScanner({
     onDetected: handleDetected,
     scannerEnabled: scannerEnabled,
   });
@@ -112,6 +118,9 @@ const Scan = ({ userGoal }) => {
         error={error} 
         isSearching={isSearching}
         detectedBarcode={detectedBarcode}
+        devices={devices}
+        currentDeviceIndex={currentDeviceIndex}
+        onSwitchCamera={switchCamera}
       />
 
       {/* Comparison Mode Indicator */}
