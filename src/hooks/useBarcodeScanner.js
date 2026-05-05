@@ -5,9 +5,24 @@ export const useBarcodeScanner = ({ onDetected, scannerEnabled = true }) => {
   const [isInitializing, setIsInitializing] = useState(true);
   const [error, setError] = useState(null);
   const lastScanTime = useRef(0);
-  const isScanning = useRef(false);
+  const isInitialized = useRef(false);
+  const quaggaActive = useRef(false);
 
-  const initQuagga = useCallback(() => {
+  const startScanner = useCallback(() => {
+    if (isInitialized.current && !quaggaActive.current) {
+      Quagga.start();
+      quaggaActive.current = true;
+    }
+  }, []);
+
+  const stopScanner = useCallback(() => {
+    if (isInitialized.current && quaggaActive.current) {
+      Quagga.stop();
+      quaggaActive.current = false;
+    }
+  }, []);
+
+  useEffect(() => {
     const scannerElement = document.querySelector('#scanner');
     if (!scannerElement) return;
 
@@ -23,10 +38,7 @@ export const useBarcodeScanner = ({ onDetected, scannerEnabled = true }) => {
           },
           target: scannerElement,
         },
-        locator: {
-          patchSize: 'medium',
-          halfSample: true,
-        },
+        locator: { patchSize: 'medium', halfSample: true },
         numOfWorkers: navigator.hardwareConcurrency || 4,
         decoder: {
           readers: ['ean_reader', 'upc_reader', 'ean_8_reader', 'upc_e_reader'],
@@ -40,15 +52,16 @@ export const useBarcodeScanner = ({ onDetected, scannerEnabled = true }) => {
           setIsInitializing(false);
           return;
         }
+        isInitialized.current = true;
         if (scannerEnabled) {
           Quagga.start();
-          isScanning.current = true;
+          quaggaActive.current = true;
         }
         setIsInitializing(false);
       }
     );
 
-    Quagga.onDetected((data) => {
+    const handleDetected = (data) => {
       if (!data || !data.codeResult || !data.codeResult.code) return;
 
       const code = data.codeResult.code;
@@ -58,28 +71,35 @@ export const useBarcodeScanner = ({ onDetected, scannerEnabled = true }) => {
       if (now - lastScanTime.current < 2000) return;
 
       lastScanTime.current = now;
-      onDetected(code);
-    });
-  }, [onDetected, scannerEnabled]);
-
-  useEffect(() => {
-    if (scannerEnabled) {
-      initQuagga();
-    } else {
-      if (isScanning.current) {
-        Quagga.stop();
-        isScanning.current = false;
+      
+      // Haptic feedback if supported
+      if (navigator.vibrate) {
+        navigator.vibrate(100);
       }
-    }
+      
+      onDetected(code);
+    };
+
+    Quagga.onDetected(handleDetected);
 
     return () => {
-      if (isScanning.current) {
+      if (isInitialized.current) {
         Quagga.stop();
-        isScanning.current = false;
       }
-      Quagga.offDetected();
+      Quagga.offDetected(handleDetected);
+      isInitialized.current = false;
+      quaggaActive.current = false;
     };
-  }, [scannerEnabled, initQuagga]);
+  }, []); // Only run once on mount
+
+  // Toggle start/stop based on scannerEnabled prop
+  useEffect(() => {
+    if (scannerEnabled) {
+      startScanner();
+    } else {
+      stopScanner();
+    }
+  }, [scannerEnabled, startScanner, stopScanner]);
 
   return { isInitializing, error };
 };

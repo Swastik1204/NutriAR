@@ -1,38 +1,119 @@
 export const products = {
   "4000517400003": {
+    barcode: "4000517400003",
     name: "Classic Digestives",
+    brand: "McVitie's",
     calories: 71,
     protein: 0.9,
     carbs: 9.4,
     fat: 3.2,
-    ingredients: ["Wheat Flour", "Palm Oil", "Sugar", "Wholemeal Wheat Flour"],
-    healthNote: "High in fiber but contains palm oil. Good as an occasional snack."
+    sugar: 2.2,
+    ingredients: ["Wheat Flour", "Palm Oil", "Sugar", "Wholemeal Wheat Flour", "Raising Agents"],
+    healthScore: 55,
+    tags: ["processed", "contains-palm-oil"]
   },
   "5000159461122": {
-    name: "Classic Milk Chocolate Bar",
+    barcode: "5000159461122",
+    name: "Milk Chocolate Bar",
+    brand: "Dairy Milk",
     calories: 229,
     protein: 3.5,
     carbs: 25.0,
     fat: 13.0,
-    ingredients: ["Milk", "Sugar", "Cocoa Butter", "Cocoa Mass", "Vegetable Fats"],
-    healthNote: "High in sugar and saturated fats. Enjoy in moderation."
+    sugar: 24.0,
+    ingredients: ["Milk", "Sugar", "Cocoa Butter", "Cocoa Mass", "Vegetable Fats", "Emulsifiers"],
+    healthScore: 30,
+    tags: ["high-sugar", "high-fat"]
   },
   "5449000000996": {
-    name: "Cola Soft Drink (330ml)",
+    barcode: "5449000000996",
+    name: "Classic Cola",
+    brand: "Coca-Cola",
     calories: 139,
     protein: 0,
     carbs: 35.0,
     fat: 0,
-    ingredients: ["Carbonated Water", "Sugar", "Color (Caramel E150d)", "Phosphoric Acid"],
-    healthNote: "High sugar content. Frequent consumption linked to health issues."
+    sugar: 35.0,
+    ingredients: ["Carbonated Water", "Sugar", "Caramel Color", "Phosphoric Acid", "Natural Flavors"],
+    healthScore: 15,
+    tags: ["high-sugar", "liquid-calories"]
   },
   "8901014002061": {
+    barcode: "8901014002061",
     name: "Classic Salted Chips",
+    brand: "Lay's",
     calories: 160,
     protein: 2.0,
     carbs: 15.0,
     fat: 10.0,
+    sugar: 0.5,
     ingredients: ["Potatoes", "Vegetable Oil", "Salt"],
-    healthNote: "High in sodium and fats. Best served in small portions."
+    healthScore: 40,
+    tags: ["high-sodium", "processed"]
+  },
+  "8901063142213": {
+    barcode: "8901063142213",
+    name: "Maggi 2-Minute Noodles",
+    brand: "Nestle",
+    calories: 310,
+    protein: 8.0,
+    carbs: 45.0,
+    fat: 11.0,
+    sugar: 1.5,
+    ingredients: ["Wheat Flour", "Palm Oil", "Salt", "Wheat Gluten", "Mineral (Calcium Carbonate)"],
+    healthScore: 35,
+    tags: ["ultra-processed", "high-sodium"]
+  },
+  "8901491101831": {
+    barcode: "8901491101831",
+    name: "Hide & Seek Biscuits",
+    brand: "Parle",
+    calories: 485,
+    protein: 6.0,
+    carbs: 70.0,
+    fat: 20.0,
+    sugar: 32.0,
+    ingredients: ["Wheat Flour", "Sugar", "Chocolate Chips", "Vegetable Oil", "Cocoa Solids"],
+    healthScore: 28,
+    tags: ["high-sugar", "processed"]
+  },
+  "8901207040412": {
+    barcode: "8901207040412",
+    name: "Bournvita Health Drink",
+    brand: "Cadbury",
+    calories: 390,
+    protein: 7.0,
+    carbs: 85.0,
+    fat: 2.0,
+    sugar: 70.0,
+    ingredients: ["Malt Extract", "Sugar", "Cocoa Solids", "Milk Solids", "Vitamins", "Minerals"],
+    healthScore: 45,
+    tags: ["very-high-sugar", "fortified"]
+  },
+  "8901719124444": {
+    barcode: "8901719124444",
+    name: "Good Day Cashew Cookies",
+    brand: "Britannia",
+    calories: 510,
+    protein: 6.5,
+    carbs: 65.0,
+    fat: 25.0,
+    sugar: 22.0,
+    ingredients: ["Wheat Flour", "Sugar", "Vegetable Oil", "Cashew Bits", "Butter", "Milk Solids"],
+    healthScore: 32,
+    tags: ["high-fat", "processed"]
+  },
+  "8901148212138": {
+    barcode: "8901148212138",
+    name: "Sunfeast Dark Fantasy",
+    brand: "ITC",
+    calories: 505,
+    protein: 5.5,
+    carbs: 64.0,
+    fat: 25.5,
+    sugar: 38.0,
+    ingredients: ["Wheat Flour", "Choco Creme", "Sugar", "Vegetable Oil", "Cocoa Solids"],
+    healthScore: 25,
+    tags: ["high-sugar", "high-fat"]
   }
 };
