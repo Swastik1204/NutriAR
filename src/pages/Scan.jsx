@@ -14,6 +14,7 @@ const Scan = ({ userGoal }) => {
   const [scannerEnabled, setScannerEnabled] = useState(true);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+  const [isSearchingWeb, setIsSearchingWeb] = useState(false);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [comparisonTarget, setComparisonTarget] = useState(null);
   const [isComparing, setIsComparing] = useState(false);
@@ -43,8 +44,8 @@ const Scan = ({ userGoal }) => {
     setScannerEnabled(false);
     setIsSearching(true);
     
-    // 2. Intelligent Product Engine
-    const product = await processBarcode(barcode, userGoal);
+    // 2. Intelligent Product Engine (Local + API only initially)
+    const product = await processBarcode(barcode, userGoal, { useWebFallback: false });
     
     if (product) {
       setActiveProduct(product);
@@ -66,6 +67,23 @@ const Scan = ({ userGoal }) => {
     setIsSearching(false);
   }, [saveToHistory, addConsumption, trackScan, isSearching, isSheetOpen, isComparing, isOffline, comparisonTarget, userGoal]);
 
+  const handleWebSearch = useCallback(async () => {
+    if (!detectedBarcode || isSearchingWeb) return;
+    setIsSearchingWeb(true);
+    
+    const product = await processBarcode(detectedBarcode, userGoal, { useWebFallback: true });
+    
+    if (product) {
+      setActiveProduct(product);
+      saveToHistory(product);
+      addConsumption(product);
+      trackScan(product.healthScore, product.source, isOffline);
+    } else {
+      // Show error state in ProductSheet (handled natively if product remains null)
+    }
+    setIsSearchingWeb(false);
+  }, [detectedBarcode, isSearchingWeb, userGoal, saveToHistory, addConsumption, trackScan, isOffline]);
+
   const { isInitializing, error } = useBarcodeScanner({
     onDetected: handleDetected,
     scannerEnabled: scannerEnabled,
@@ -78,6 +96,7 @@ const Scan = ({ userGoal }) => {
     setScannerEnabled(true);
     setDetectedBarcode(null);
     setActiveProduct(null);
+    setIsSearchingWeb(false);
   }, []);
 
   const startComparison = (product) => {
@@ -111,6 +130,8 @@ const Scan = ({ userGoal }) => {
         onClose={handleCloseSheet}
         onCompare={startComparison}
         userGoal={userGoal}
+        isSearchingWeb={isSearchingWeb}
+        onWebSearch={handleWebSearch}
       />
 
       {/* Comparison Sheet */}

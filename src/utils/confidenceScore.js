@@ -11,6 +11,14 @@ export const calculateConfidence = (product, source) => {
     };
   }
 
+  if (source === 'web') {
+    return {
+      score: 60, // 50-70 range
+      quality: "estimated",
+      label: "Estimated from web data"
+    };
+  }
+
   // API Logic
   let score = 85;
   let quality = "verified";

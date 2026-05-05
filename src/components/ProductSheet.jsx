@@ -6,7 +6,7 @@ import { getDecision, getVerdictColor } from '../utils/decisionEngine';
 import { useDailyNutrition } from '../hooks/useDailyNutrition';
 import { products } from '../data/products';
 
-const ProductSheet = ({ product, barcode, isOpen, onClose, onCompare, userGoal = 'balanced' }) => {
+const ProductSheet = ({ product, barcode, isOpen, onClose, onCompare, userGoal = 'balanced', isSearchingWeb, onWebSearch }) => {
   const modalRef = useRef(null);
   const { dailyStats } = useDailyNutrition();
 
@@ -38,22 +38,44 @@ const ProductSheet = ({ product, barcode, isOpen, onClose, onCompare, userGoal =
   if (!product && isOpen) {
     return (
       <dialog ref={modalRef} className="modal modal-bottom sm:modal-middle" onClose={onClose}>
-        <div className="modal-box glass-card border-white/10 p-8 shadow-glass">
-          <div className="flex flex-col items-center py-6 text-center">
-            <div className="w-20 h-20 rounded-full bg-error/10 flex items-center justify-center text-error mb-6 shadow-glass border border-error/20">
-              <span className="material-symbols-outlined text-4xl animate-pulse">barcode_error</span>
-            </div>
-            <h3 className="font-headline font-bold text-3xl mb-3 text-white">Product Not Recognized</h3>
-            <p className="text-on-surface-variant text-sm mb-8 max-w-[280px] leading-relaxed">
-              Barcode <span className="font-mono text-primary bg-primary/10 px-2 py-0.5 rounded-md">{barcode}</span> isn't in our neural database yet.
-            </p>
-            <div className="flex flex-col gap-3 w-full">
-              <button className="btn btn-primary w-full rounded-2xl h-14 text-base font-bold shadow-neon-primary text-on-primary border-none" onClick={onClose}>Retry Scan</button>
-            </div>
-          </div>
+        <div className="modal-box glass-card border-white/10 p-8 shadow-glass text-center relative overflow-hidden">
+          {/* Searching Web State */}
+          {isSearchingWeb ? (
+             <div className="flex flex-col items-center py-10 animate-fade-in">
+                <div className="relative w-24 h-24 flex items-center justify-center mb-6">
+                   <div className="absolute inset-0 rounded-full border-4 border-primary/20"></div>
+                   <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
+                   <span className="material-symbols-outlined text-primary text-3xl">travel_explore</span>
+                </div>
+                <h3 className="font-headline font-bold text-2xl mb-2 text-white text-gradient drop-shadow-md">Searching Web...</h3>
+                <p className="text-sm text-primary/70 uppercase tracking-widest font-bold animate-pulse">Extracting nutrition data</p>
+             </div>
+          ) : (
+             <div className="flex flex-col items-center py-6 animate-fade-in">
+                <div className="w-20 h-20 rounded-full bg-error/10 flex items-center justify-center text-error mb-6 shadow-glass border border-error/20">
+                  <span className="material-symbols-outlined text-4xl">barcode_error</span>
+                </div>
+                <h3 className="font-headline font-bold text-3xl mb-3 text-white">Product Not Found</h3>
+                <p className="text-on-surface-variant text-sm mb-8 max-w-[280px] leading-relaxed">
+                  Barcode <span className="font-mono text-primary bg-primary/10 px-2 py-0.5 rounded-md">{barcode}</span> isn't in our neural or standard API database.
+                </p>
+                <div className="flex flex-col gap-3 w-full">
+                  <button 
+                    className="btn btn-primary w-full rounded-2xl h-14 text-base font-bold shadow-neon-primary text-on-primary border-none group" 
+                    onClick={onWebSearch}
+                  >
+                    <span className="material-symbols-outlined text-xl group-hover:animate-bounce">travel_explore</span>
+                    Search Web Data
+                  </button>
+                  <button className="btn btn-outline border-white/20 text-white/50 w-full rounded-2xl h-14 font-bold hover:bg-white/5" onClick={onClose}>
+                    Close
+                  </button>
+                </div>
+             </div>
+          )}
         </div>
         <form method="dialog" className="modal-backdrop bg-black/60 backdrop-blur-md">
-          <button>close</button>
+          <button disabled={isSearchingWeb}>close</button>
         </form>
       </dialog>
     );

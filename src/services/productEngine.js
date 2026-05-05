@@ -1,8 +1,10 @@
 import { products } from '../data/products';
 import { fetchProductFromOFF } from './foodApi';
+import { fetchFromWeb } from './webLookup';
 import { calculateHealthScore } from '../utils/nutrition';
 import { generateInsights } from '../utils/healthInsights';
 import { calculateConfidence } from '../utils/confidenceScore';
+import { getDecision } from '../utils/decisionEngine';
 
 /**
  * Intelligent Product Detection Pipeline
@@ -10,7 +12,7 @@ import { calculateConfidence } from '../utils/confidenceScore';
 
 const CACHE = new Map();
 
-export const processBarcode = async (barcode, userGoal = 'balanced') => {
+export const processBarcode = async (barcode, userGoal = 'balanced', options = { useWebFallback: false }) => {
   // 0. Check Cache
   if (CACHE.has(barcode)) {
     console.log('Serving from cache:', barcode);
@@ -29,13 +31,13 @@ export const processBarcode = async (barcode, userGoal = 'balanced') => {
   // 2. Fallback to Open Food Facts API
   if (!product) {
     product = await fetchProductFromOFF(barcode);
-    source = 'api';
+    if (product) source = 'api';
   }
 
-  // 3. Fallback to Web Search (Controlled Mock)
-  if (!product) {
+  // 3. Manual Web Fallback Trigger
+  if (!product && options.useWebFallback) {
     product = await fetchFromWeb(barcode);
-    source = 'web';
+    if (product) source = 'web';
   }
 
   if (!product) return null;
@@ -54,15 +56,8 @@ export const processBarcode = async (barcode, userGoal = 'balanced') => {
     timestamp: Date.now()
   };
 
-  // 5. Cache Result
+  // 5. Cache Result (Only cache if we actually found something)
   CACHE.set(barcode, enrichedProduct);
 
   return enrichedProduct;
-};
-
-const fetchFromWeb = async (barcode) => {
-  // Placeholder for a web search fallback
-  // In a real app, this might call a Google Search API or similar
-  console.log('Web fallback for:', barcode);
-  return null; // Keep it null for now as per "Controlled" requirement
 };
