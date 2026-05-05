@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#b45309"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" rx="80" fill="#111827"/>
+  <circle cx="512" cy="512" r="348" fill="url(#g)"/>
+  <path d="M310 430c0-88 90-144 202-144s202 56 202 144v14H310z" fill="#fef3c7"/>
+  <rect x="308" y="444" width="408" height="72" rx="36" fill="#ef4444"/>
+  <rect x="300" y="520" width="424" height="72" rx="36" fill="#16a34a"/>
+  <rect x="292" y="596" width="440" height="88" rx="44" fill="#d97706"/>
+  <path d="M332 684c36-42 92-64 180-64s144 22 180 64" fill="none" stroke="#fde68a" stroke-width="40" stroke-linecap="round"/>
+  <text x="512" y="820" text-anchor="middle" font-family="Arial, sans-serif" font-size="84" font-weight="700" fill="#fffbeb">Burger</text>
+</svg>

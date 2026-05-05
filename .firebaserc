@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "cooklens-b1f92"
+  },
+  "targets": {
+    "cooklens-b1f92": {
+      "hosting": {
+        "production": [
+          "nutri-ar"
+        ]
+      }
+    }
+  }
+}

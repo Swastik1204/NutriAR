@@ -1,0 +1,19 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bg" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(512 512) rotate(90) scale(460)">
+      <stop stop-color="#0f172a"/>
+      <stop offset="1" stop-color="#020617"/>
+    </radialGradient>
+    <linearGradient id="ring" x1="240" y1="220" x2="820" y2="820" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5eead4"/>
+      <stop offset="1" stop-color="#38bdf8"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" rx="96" fill="url(#bg)"/>
+  <circle cx="512" cy="432" r="250" stroke="url(#ring)" stroke-width="36" stroke-linecap="round" opacity="0.9"/>
+  <circle cx="512" cy="432" r="180" stroke="#ffffff" stroke-width="10" stroke-dasharray="20 18" opacity="0.22"/>
+  <path d="M323 432C323 327.6 407.6 243 512 243C616.4 243 701 327.6 701 432C701 520.7 638 596.7 553 615.5C547.6 617.1 542.4 619.6 538 623.1L512 644L486 623.1C481.6 619.6 476.4 617.1 471 615.5C386 596.7 323 520.7 323 432Z" fill="#f8fafc" fill-opacity="0.08"/>
+  <path d="M397 463C397 432 425 407 460 407H564C599 407 627 432 627 463C627 521 569 559 512 559C455 559 397 521 397 463Z" fill="#f8fafc" fill-opacity="0.9"/>
+  <path d="M355 710H669" stroke="#5eead4" stroke-width="16" stroke-linecap="round" opacity="0.22"/>
+  <text x="512" y="820" text-anchor="middle" font-family="Arial, sans-serif" font-size="84" font-weight="700" fill="#dbeafe">Dosa</text>
+</svg>
