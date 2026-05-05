@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useMemo, memo } from 'react';
 import { calculateHealthScore, getHealthColor, getHealthBg } from '../utils/nutrition';
 import { generateInsights } from '../utils/healthInsights';
+import { calculateConfidence, getConfidenceColor } from '../utils/confidenceScore';
 
-const ProductSheet = ({ product, barcode, isOpen, onClose }) => {
+const ProductSheet = ({ product, barcode, isOpen, onClose, onCompare, userGoal = 'balanced' }) => {
   const modalRef = useRef(null);
 
   useEffect(() => {
@@ -13,12 +14,13 @@ const ProductSheet = ({ product, barcode, isOpen, onClose }) => {
     }
   }, [isOpen]);
 
-  const { healthScore, insights } = useMemo(() => {
-    if (!product) return { healthScore: 0, insights: null };
+  const { healthScore, insights, confidence } = useMemo(() => {
+    if (!product) return { healthScore: 0, insights: null, confidence: null };
     const score = product.healthScore || calculateHealthScore(product);
-    const engineResults = generateInsights(product);
-    return { healthScore: score, insights: engineResults };
-  }, [product]);
+    const engineResults = generateInsights(product, userGoal);
+    const conf = calculateConfidence(product, product.source || 'local');
+    return { healthScore: score, insights: engineResults, confidence: conf };
+  }, [product, userGoal]);
 
   if (!product && isOpen) {
     return (
@@ -28,13 +30,14 @@ const ProductSheet = ({ product, barcode, isOpen, onClose }) => {
             <div className="w-16 h-16 rounded-full bg-error/10 flex items-center justify-center text-error mb-4">
               <span className="material-symbols-outlined text-3xl">barcode_reader</span>
             </div>
-            <h3 className="font-bold text-2xl mb-2">Unknown Product</h3>
-            <p className="text-on-surface-variant text-sm mb-6">
-              Barcode <span className="font-mono text-primary">{barcode}</span> not found in our database.
+            <h3 className="font-bold text-2xl mb-2">Product Not Recognized</h3>
+            <p className="text-on-surface-variant text-sm mb-6 max-w-[250px]">
+              Barcode <span className="font-mono text-primary">{barcode}</span> isn't in our database yet.
             </p>
-            <form method="dialog" className="w-full">
-              <button className="btn btn-primary w-full rounded-2xl" onClick={onClose}>Continue Scanning</button>
-            </form>
+            <div className="flex flex-col gap-2 w-full">
+              <button className="btn btn-primary w-full rounded-2xl" onClick={onClose}>Retry Scan</button>
+              <button className="btn btn-ghost w-full rounded-2xl text-xs opacity-50">Save for Expansion</button>
+            </div>
           </div>
         </div>
       </dialog>
@@ -49,9 +52,11 @@ const ProductSheet = ({ product, barcode, isOpen, onClose }) => {
         {/* Header */}
         <div className="relative p-6 pb-4 border-b border-outline-variant/10 bg-gradient-to-br from-surface to-surface-container-low">
           <div className="flex justify-between items-start mb-4">
-            <div className="flex flex-col">
-               <span className="text-xs font-bold uppercase tracking-[0.2em] text-primary/70">Intelligence Engine</span>
-               <p className="text-[10px] font-mono text-on-surface-variant/50 mt-0.5">{product.brand} • {product.source || 'Local Dataset'}</p>
+            <div className="flex flex-col gap-1">
+               <div className={`px-2 py-0.5 rounded-md border text-[8px] font-bold uppercase tracking-widest inline-block ${getConfidenceColor(confidence.quality)}`}>
+                 {confidence.label}
+               </div>
+               <p className="text-[10px] font-mono text-on-surface-variant/50">{product.brand} • {product.source || 'Verified Source'}</p>
             </div>
             <form method="dialog">
               <button className="btn btn-sm btn-circle btn-ghost" onClick={onClose}>✕</button>
@@ -80,22 +85,33 @@ const ProductSheet = ({ product, barcode, isOpen, onClose }) => {
           </div>
         </div>
 
-        <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto scrollbar-hide">
+        <div className="p-6 space-y-6 max-h-[50vh] overflow-y-auto scrollbar-hide">
+          {/* Daily Tracker Stat */}
+          <div className="p-4 bg-primary/5 rounded-3xl border border-primary/10 flex items-center justify-between">
+             <div>
+                <p className="text-[10px] font-bold uppercase text-primary tracking-widest">Added to Today</p>
+                <p className="text-xs font-medium text-on-surface-variant">Daily quota: {product.calories} kcal</p>
+             </div>
+             <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary">
+                <span className="material-symbols-outlined">add_task</span>
+             </div>
+          </div>
+
           {/* Macros */}
           <div className="grid grid-cols-3 gap-2">
-             <div className="bg-surface-container-low p-3 rounded-2xl border border-outline-variant/5 flex flex-col items-center">
-                <span className="text-[10px] font-bold uppercase text-on-surface-variant/60 mb-1">Protein</span>
-                <span className="text-lg font-bold text-primary">{product.protein}g</span>
+             <div className="bg-surface-container-low p-3 rounded-2xl border border-outline-variant/5 flex flex-col items-center text-center">
+                <span className="text-[9px] font-bold uppercase text-on-surface-variant/60 mb-1">Protein</span>
+                <span className="text-base font-bold text-primary">{product.protein}g</span>
                 <progress className="progress progress-primary h-1 mt-2" value={product.protein} max="20"></progress>
              </div>
-             <div className="bg-surface-container-low p-3 rounded-2xl border border-outline-variant/5 flex flex-col items-center">
-                <span className="text-[10px] font-bold uppercase text-on-surface-variant/60 mb-1">Sugar</span>
-                <span className="text-lg font-bold text-warning">{product.sugar}g</span>
+             <div className="bg-surface-container-low p-3 rounded-2xl border border-outline-variant/5 flex flex-col items-center text-center">
+                <span className="text-[9px] font-bold uppercase text-on-surface-variant/60 mb-1">Sugar</span>
+                <span className="text-base font-bold text-warning">{product.sugar}g</span>
                 <progress className="progress progress-warning h-1 mt-2" value={product.sugar} max="50"></progress>
              </div>
-             <div className="bg-surface-container-low p-3 rounded-2xl border border-outline-variant/5 flex flex-col items-center">
-                <span className="text-[10px] font-bold uppercase text-on-surface-variant/60 mb-1">Fat</span>
-                <span className="text-lg font-bold text-error">{product.fat}g</span>
+             <div className="bg-surface-container-low p-3 rounded-2xl border border-outline-variant/5 flex flex-col items-center text-center">
+                <span className="text-[9px] font-bold uppercase text-on-surface-variant/60 mb-1">Fat</span>
+                <span className="text-base font-bold text-error">{product.fat}g</span>
                 <progress className="progress progress-error h-1 mt-2" value={product.fat} max="40"></progress>
              </div>
           </div>
@@ -103,7 +119,7 @@ const ProductSheet = ({ product, barcode, isOpen, onClose }) => {
           {/* Insights List */}
           {(insights?.warnings.length > 0 || insights?.suggestions.length > 0) && (
             <div className="space-y-3">
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-on-surface-variant/60 px-1">Health Analysis</p>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-on-surface-variant/60 px-1">Goal: {userGoal.replace('-', ' ')}</p>
               <div className="space-y-2">
                 {insights.warnings.map((w, i) => (
                   <div key={i} className="flex gap-3 p-3 rounded-2xl bg-error/5 border border-error/10 text-error">
@@ -135,27 +151,20 @@ const ProductSheet = ({ product, barcode, isOpen, onClose }) => {
               </div>
             </div>
           )}
-
-          {/* Ingredients */}
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-on-surface-variant/60 mb-3 px-1">Top Ingredients</p>
-            <div className="flex flex-wrap gap-2">
-              {product.ingredients.map((ing) => (
-                <span key={ing} className="px-3 py-1.5 bg-surface-container-high/50 rounded-lg text-[10px] font-bold text-on-surface-variant border border-outline-variant/5 uppercase tracking-tighter">
-                  {ing}
-                </span>
-              ))}
-            </div>
-          </div>
         </div>
 
-        {/* Action Button */}
-        <div className="p-6 bg-surface-container-lowest border-t border-outline-variant/10">
-          <form method="dialog">
-            <button className="btn btn-primary btn-block rounded-2xl h-14 text-base font-bold shadow-lg" onClick={onClose}>
-              Done
-            </button>
-          </form>
+        {/* Action Buttons */}
+        <div className="p-6 bg-surface-container-lowest border-t border-outline-variant/10 flex flex-col gap-3">
+          <button 
+            className="btn btn-outline btn-block border-outline-variant/20 rounded-2xl flex items-center gap-2 font-bold"
+            onClick={() => onCompare(product)}
+          >
+            <span className="material-symbols-outlined text-xl">compare_arrows</span>
+            Compare with another
+          </button>
+          <button className="btn btn-primary btn-block rounded-2xl h-14 text-base font-bold shadow-lg" onClick={onClose}>
+            Got it
+          </button>
         </div>
       </div>
     </dialog>

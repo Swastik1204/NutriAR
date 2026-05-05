@@ -1,11 +1,17 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import BarcodeScanner from './components/BarcodeScanner';
 import ProductSheet from './components/ProductSheet';
+import ComparisonSheet from './components/ComparisonSheet';
 import ErrorBoundary from './components/ErrorBoundary';
 import { useBarcodeScanner } from './hooks/useBarcodeScanner';
 import { useScanHistory } from './hooks/useScanHistory';
+import { useDailyNutrition } from './hooks/useDailyNutrition';
+import { useAnalytics } from './hooks/useAnalytics';
 import { products } from './data/products';
 import { fetchProductFromOFF } from './services/foodApi';
+import { getDiagnosticsReport, startScanTimer, recordScanSuccess, recordScanFail } from './utils/scannerDiagnostics';
+
+const GOAL_KEY = 'nutriar_user_goal_v1';
 
 function AppContent() {
   const [detectedBarcode, setDetectedBarcode] = useState(null);
@@ -15,10 +21,19 @@ function AppContent() {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  
+  // New States
+  const [userGoal, setUserGoal] = useState(localStorage.getItem(GOAL_KEY) || 'balanced');
+  const [showGoalPicker, setShowGoalPicker] = useState(!localStorage.getItem(GOAL_KEY));
+  const [comparisonTarget, setComparisonTarget] = useState(null); // Product A for comparison
+  const [isComparing, setIsComparing] = useState(false);
+  const [showDiagnostics, setShowDiagnostics] = useState(false);
+  const logoTapCount = useRef(0);
 
   const { history, saveToHistory, removeFromHistory, clearHistory } = useScanHistory(15);
+  const { dailyStats, addConsumption } = useDailyNutrition();
+  const { trackScan } = useAnalytics();
 
-  // Monitor online status
   useEffect(() => {
     const handleOnline = () => setIsOffline(false);
     const handleOffline = () => setIsOffline(true);
@@ -30,85 +45,113 @@ function AppContent() {
     };
   }, []);
 
+  const handleLogoTap = () => {
+    logoTapCount.current++;
+    if (logoTapCount.current >= 5) {
+      setShowDiagnostics(prev => !prev);
+      logoTapCount.current = 0;
+    }
+    setTimeout(() => { logoTapCount.current = 0; }, 2000);
+  };
+
   const handleDetected = useCallback(async (barcode) => {
-    if (isSearching || isSheetOpen) return;
+    if (isSearching || isSheetOpen || isComparing) return;
     
-    console.log('Barcode detected:', barcode);
+    startScanTimer();
     setDetectedBarcode(barcode);
     setScannerEnabled(false);
     setIsSearching(true);
     
-    // 1. Try local dataset first (instant)
     let product = products[barcode];
+    let source = 'local';
     
-    // 2. Try Open Food Facts API if not found locally and online
     if (!product && !isOffline) {
-      console.log('Not found locally, fetching from API...');
       product = await fetchProductFromOFF(barcode);
+      source = product ? 'api' : 'fail';
     }
     
     if (product) {
+      recordScanSuccess();
       setActiveProduct(product);
       saveToHistory(product);
+      addConsumption(product);
+      trackScan(product.healthScore || 50, source, isOffline);
+      
+      if (comparisonTarget) {
+        setIsComparing(true);
+      } else {
+        setIsSheetOpen(true);
+      }
     } else {
+      recordScanFail();
       setActiveProduct(null);
+      setIsSheetOpen(true);
     }
     
     setIsSearching(false);
-    setIsSheetOpen(true);
-  }, [saveToHistory, isSearching, isSheetOpen, isOffline]);
+  }, [saveToHistory, addConsumption, trackScan, isSearching, isSheetOpen, isComparing, isOffline, comparisonTarget]);
 
   const { isInitializing, error } = useBarcodeScanner({
     onDetected: handleDetected,
-    scannerEnabled: scannerEnabled && !isHistoryOpen,
+    scannerEnabled: scannerEnabled && !isHistoryOpen && !showGoalPicker,
   });
 
   const handleCloseSheet = useCallback(() => {
     setIsSheetOpen(false);
-    // Instant re-enable for better feel, but keep barcode ref for UI feedback
+    setIsComparing(false);
+    setComparisonTarget(null);
     setScannerEnabled(true);
     setDetectedBarcode(null);
     setActiveProduct(null);
   }, []);
 
-  const openFromHistory = useCallback((item) => {
-    setDetectedBarcode(item.barcode);
-    setActiveProduct(item);
-    setIsHistoryOpen(false);
-    setScannerEnabled(false);
-    setIsSheetOpen(true);
-  }, []);
+  const startComparison = (product) => {
+    setComparisonTarget(product);
+    setIsSheetOpen(false);
+    setScannerEnabled(true);
+    // UI Notification for comparison mode would be nice here
+  };
+
+  const selectGoal = (goal) => {
+    setUserGoal(goal);
+    localStorage.setItem(GOAL_KEY, goal);
+    setShowGoalPicker(false);
+  };
 
   return (
-    <div className="relative h-[100dvh] w-screen overflow-hidden bg-black text-on-surface flex flex-col">
+    <div className="relative h-[100dvh] w-screen overflow-hidden bg-black text-on-surface flex flex-col font-body">
       {/* Top Navbar */}
       <header className="absolute top-0 left-0 right-0 z-50 p-6 pt-12 pb-16 bg-gradient-to-b from-black/90 via-black/40 to-transparent flex justify-between items-start px-8">
-        <div className="flex flex-col">
+        <div className="flex flex-col cursor-pointer" onClick={handleLogoTap}>
           <div className="flex items-center gap-2">
             <div className="w-10 h-10 rounded-2xl bg-primary flex items-center justify-center shadow-2xl shadow-primary/40 ring-4 ring-white/10">
                <span className="material-symbols-outlined text-white text-2xl">nutrition</span>
             </div>
             <div>
               <h1 className="text-2xl font-headline font-bold text-white tracking-tight leading-none">NutriAR</h1>
-              <div className="flex items-center gap-2 mt-1">
-                <span className={`w-1.5 h-1.5 rounded-full ${isOffline ? 'bg-error animate-pulse' : 'bg-success'}`}></span>
-                <p className="text-[8px] font-bold uppercase tracking-[0.2em] text-white/60">
-                  {isOffline ? 'Offline Mode' : 'Engine Online'}
-                </p>
-              </div>
+              <p className="text-[8px] font-bold uppercase tracking-[0.2em] text-primary mt-1 opacity-80">
+                Goal: {userGoal.replace('-', ' ')}
+              </p>
             </div>
           </div>
         </div>
 
-        <button 
-          onClick={() => setIsHistoryOpen(true)}
-          className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-white transition-all hover:bg-white/20 active:scale-90 pointer-events-auto shadow-2xl"
-        >
-          <span className="material-symbols-outlined">history</span>
-        </button>
+        <div className="flex gap-3">
+          {isOffline && (
+            <div className="w-10 h-10 rounded-2xl bg-error/20 backdrop-blur-xl border border-error/30 flex items-center justify-center text-error">
+              <span className="material-symbols-outlined text-xl">wifi_off</span>
+            </div>
+          )}
+          <button 
+            onClick={() => setIsHistoryOpen(true)}
+            className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-white transition-all hover:bg-white/20 active:scale-90 pointer-events-auto"
+          >
+            <span className="material-symbols-outlined">history</span>
+          </button>
+        </div>
       </header>
 
-      {/* Main Scanner View */}
+      {/* Main Viewport */}
       <main className="flex-1 relative">
         <BarcodeScanner 
           isInitializing={isInitializing} 
@@ -116,85 +159,118 @@ function AppContent() {
           isSearching={isSearching}
           detectedBarcode={detectedBarcode}
         />
-        
-        {isOffline && !isSheetOpen && !isHistoryOpen && (
-          <div className="absolute top-32 left-1/2 -translate-x-1/2 z-20 px-4 py-2 bg-error/20 backdrop-blur-md rounded-full border border-error/30 flex items-center gap-2 animate-fade-in">
-             <span className="material-symbols-outlined text-error text-sm">wifi_off</span>
-             <p className="text-white text-[9px] font-bold uppercase tracking-wider">Limited to offline data</p>
+
+        {/* Comparison Mode Indicator */}
+        {comparisonTarget && (
+          <div className="absolute top-32 left-1/2 -translate-x-1/2 z-40 px-6 py-3 bg-primary/90 backdrop-blur-xl rounded-full shadow-2xl border border-white/20 flex items-center gap-3 animate-bounce">
+            <span className="material-symbols-outlined text-white">compare_arrows</span>
+            <p className="text-white text-xs font-bold uppercase tracking-widest">Scan item to compare</p>
+          </div>
+        )}
+
+        {/* Daily Progress Dashboard (Over Scanner) */}
+        {!isSheetOpen && !isHistoryOpen && !showGoalPicker && (
+          <div className="absolute bottom-32 left-0 right-0 z-20 px-8 pointer-events-none">
+            <div className="p-6 bg-surface-container-lowest/80 backdrop-blur-2xl rounded-[40px] border border-outline-variant/20 shadow-terra-lg pointer-events-auto">
+              <div className="flex justify-between items-center mb-4">
+                <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Today's Intake</p>
+                <span className="badge badge-primary badge-sm font-bold">{dailyStats.calories} / 2500 kcal</span>
+              </div>
+              <div className="grid grid-cols-4 gap-4">
+                {[
+                  { label: 'Prot', val: dailyStats.protein, max: 100, color: 'primary' },
+                  { label: 'Sugar', val: dailyStats.sugar, max: 50, color: 'warning' },
+                  { label: 'Fat', val: dailyStats.fat, max: 70, color: 'error' },
+                  { label: 'Carb', val: dailyStats.carbs, max: 300, color: 'info' }
+                ].map(stat => (
+                  <div key={stat.label} className="flex flex-col items-center">
+                    <div className={`radial-progress text-${stat.color} text-[10px] font-bold`} 
+                         style={{ "--value": (stat.val/stat.max)*100, "--size": "3rem", "--thickness": "3px" }}>
+                      {stat.val}g
+                    </div>
+                    <span className="text-[8px] font-bold uppercase mt-1 opacity-50">{stat.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Diagnostics Modal */}
+        {showDiagnostics && (
+          <div className="absolute inset-x-8 top-32 z-[100] p-6 bg-black/90 backdrop-blur-3xl rounded-3xl border border-white/10 text-white font-mono text-[10px]">
+             <h3 className="text-primary font-bold mb-4 uppercase tracking-widest">Scanner Diagnostics</h3>
+             <div className="space-y-2">
+                {Object.entries(getDiagnosticsReport()).map(([key, val]) => (
+                  <div key={key} className="flex justify-between">
+                    <span className="opacity-50">{key}:</span>
+                    <span>{val}</span>
+                  </div>
+                ))}
+             </div>
+             <button onClick={() => setShowDiagnostics(false)} className="btn btn-ghost btn-xs w-full mt-4 text-primary">Close</button>
           </div>
         )}
       </main>
+
+      {/* Goal Picker (Onboarding) */}
+      {showGoalPicker && (
+        <div className="absolute inset-0 z-[200] bg-surface-container-lowest flex flex-col p-10 animate-fade-in">
+          <h2 className="text-5xl font-headline font-bold text-on-surface mt-12 mb-4 leading-tight">Define Your Journey</h2>
+          <p className="text-on-surface-variant text-lg mb-12">NutriAR will adapt its intelligence to your health goals.</p>
+          
+          <div className="grid gap-4 flex-1 overflow-y-auto pr-2">
+            {[
+              { id: 'weight-loss', icon: 'weight', title: 'Weight Loss', desc: 'Prioritize low calorie & low sugar' },
+              { id: 'muscle-gain', icon: 'fitness_center', title: 'Muscle Gain', desc: 'Focus on high protein intake' },
+              { id: 'balanced', icon: 'balance', title: 'Balanced Diet', desc: 'General health & wellness' },
+              { id: 'low-sugar', icon: 'sugar_cane', title: 'Low Sugar', desc: 'Reduce glycemic load' }
+            ].map(goal => (
+              <button 
+                key={goal.id} 
+                onClick={() => selectGoal(goal.id)}
+                className="p-6 rounded-[32px] bg-surface-container-low border border-outline-variant/20 flex items-center gap-5 text-left transition-all hover:bg-primary/5 active:scale-95"
+              >
+                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                  <span className="material-symbols-outlined text-3xl">{goal.icon}</span>
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg">{goal.title}</h3>
+                  <p className="text-xs text-on-surface-variant">{goal.desc}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* History Drawer */}
       {isHistoryOpen && (
         <div className="absolute inset-0 z-[120] flex flex-col animate-fade-in">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-xl" onClick={() => setIsHistoryOpen(false)} />
-          <div className="relative mt-auto bg-surface-container-lowest rounded-t-[40px] h-[85vh] flex flex-col border-t border-outline-variant/30 animate-slide-up overflow-hidden shadow-[0_-20px_50px_rgba(0,0,0,0.5)]">
-            {/* Drawer Handle */}
-            <div className="w-12 h-1 bg-outline-variant/30 rounded-full mx-auto mt-4 mb-2" />
-            
+          <div className="relative mt-auto bg-surface-container-lowest rounded-t-[40px] h-[85vh] flex flex-col border-t border-outline-variant/30 animate-slide-up">
             <div className="p-8 pb-4 flex justify-between items-end">
               <div>
-                <h2 className="text-4xl font-headline font-bold text-on-surface">Timeline</h2>
-                <p className="text-xs font-bold text-primary uppercase tracking-widest mt-1">Recent Insights</p>
+                <h2 className="text-4xl font-headline font-bold">Timeline</h2>
+                <button onClick={() => setShowGoalPicker(true)} className="text-[10px] font-bold text-primary uppercase mt-2">Change Goal: {userGoal}</button>
               </div>
-              <button 
-                onClick={() => setIsHistoryOpen(false)}
-                className="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface-variant"
-              >
+              <button onClick={() => setIsHistoryOpen(false)} className="btn btn-circle btn-ghost">
                 <span className="material-symbols-outlined">close</span>
               </button>
             </div>
-
-            <div className="flex-1 overflow-y-auto p-6 pt-2 space-y-4">
-              {history.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-center p-12 opacity-30">
-                  <span className="material-symbols-outlined text-7xl mb-4">history_toggle_off</span>
-                  <p className="font-bold text-sm uppercase tracking-[0.2em]">No Timeline Data</p>
-                  <p className="text-xs mt-2 normal-case max-w-[200px]">Scan products to build your personal nutrition history.</p>
-                </div>
-              ) : (
-                history.map((item) => (
-                  <div key={item.barcode} className="group relative">
-                    <button 
-                      onClick={() => openFromHistory(item)}
-                      className="w-full flex items-center gap-4 p-4 rounded-3xl bg-surface-container-low border border-outline-variant/10 transition-all hover:bg-surface-container-high hover:border-primary/20 active:scale-[0.98] text-left shadow-sm"
-                    >
-                      <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center shadow-inner overflow-hidden border border-outline-variant/10">
-                         <span className="material-symbols-outlined text-primary/40 text-3xl">barcode</span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-primary/60 uppercase tracking-tighter mb-0.5">{item.brand}</p>
-                        <p className="font-headline font-bold text-on-surface truncate text-lg leading-tight">{item.name}</p>
-                        <p className="text-[10px] text-on-surface-variant font-mono mt-1 opacity-60">ID: {item.barcode}</p>
-                      </div>
-                      <div className="text-right flex flex-col items-end pr-8">
-                         <span className="text-[10px] text-on-surface-variant font-bold opacity-40 uppercase mb-1">{new Date(item.timestamp).toLocaleDateString()}</span>
-                         <span className="badge badge-primary badge-sm font-bold">{item.calories} kcal</span>
-                      </div>
-                    </button>
-                    
-                    {/* Delete Individual Item */}
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); removeFromHistory(item.barcode); }}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-error/10 text-error flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
+            {/* History items mapping here... */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              {history.map(item => (
+                <div key={item.barcode} className="flex items-center gap-4 p-4 rounded-3xl bg-surface-container-low border border-outline-variant/10">
+                   <div className="flex-1">
+                      <p className="font-bold">{item.name}</p>
+                      <p className="text-[10px] opacity-50 uppercase">{item.brand}</p>
+                   </div>
+                   <button onClick={() => removeFromHistory(item.barcode)} className="text-error opacity-50 hover:opacity-100">
                       <span className="material-symbols-outlined text-xl">delete</span>
-                    </button>
-                  </div>
-                ))
-              )}
-            </div>
-            
-            <div className="p-8 pt-4">
-               <button 
-                 onClick={clearHistory}
-                 className="btn btn-ghost btn-block text-error text-xs font-bold uppercase tracking-widest gap-2"
-                 disabled={history.length === 0}
-               >
-                 <span className="material-symbols-outlined text-sm">delete_sweep</span>
-                 Purge History
-               </button>
+                   </button>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -205,7 +281,17 @@ function AppContent() {
         product={activeProduct} 
         barcode={detectedBarcode}
         isOpen={isSheetOpen} 
-        onClose={handleCloseSheet} 
+        onClose={handleCloseSheet}
+        onCompare={startComparison}
+        userGoal={userGoal}
+      />
+
+      {/* Comparison Sheet */}
+      <ComparisonSheet 
+        productA={comparisonTarget}
+        productB={activeProduct}
+        isOpen={isComparing}
+        onClose={handleCloseSheet}
       />
 
       {/* Aesthetic Blobs */}
