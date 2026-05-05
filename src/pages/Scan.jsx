@@ -12,7 +12,6 @@ const Scan = ({ userGoal }) => {
   const [detectedBarcode, setDetectedBarcode] = useState(null);
   const [activeProduct, setActiveProduct] = useState(null);
   const [scannerEnabled, setScannerEnabled] = useState(true);
-  const [facingMode, setFacingMode] = useState('environment'); // default to rear camera
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [isSearchingWeb, setIsSearchingWeb] = useState(false);
@@ -37,12 +36,15 @@ const Scan = ({ userGoal }) => {
 
   const handleDetected = useCallback(async (barcode) => {
     if (isSearching || isSheetOpen || isComparing) return;
+    
+    // 1. Haptic / Sound Feedback
     if ('vibrate' in navigator) navigator.vibrate(50);
     
     setDetectedBarcode(barcode);
     setScannerEnabled(false);
     setIsSearching(true);
     
+    // 2. Intelligent Product Engine (Local + API only initially)
     const product = await processBarcode(barcode, userGoal, { useWebFallback: false });
     
     if (product) {
@@ -51,6 +53,7 @@ const Scan = ({ userGoal }) => {
       addConsumption(product);
       trackScan(product.healthScore, product.source, isOffline);
       
+      // 3. Fast Auto-Open
       if (comparisonTarget) {
         setIsComparing(true);
       } else {
@@ -67,24 +70,23 @@ const Scan = ({ userGoal }) => {
   const handleWebSearch = useCallback(async () => {
     if (!detectedBarcode || isSearchingWeb) return;
     setIsSearchingWeb(true);
+    
     const product = await processBarcode(detectedBarcode, userGoal, { useWebFallback: true });
+    
     if (product) {
       setActiveProduct(product);
       saveToHistory(product);
       addConsumption(product);
       trackScan(product.healthScore, product.source, isOffline);
+    } else {
+      // Show error state in ProductSheet (handled natively if product remains null)
     }
     setIsSearchingWeb(false);
   }, [detectedBarcode, isSearchingWeb, userGoal, saveToHistory, addConsumption, trackScan, isOffline]);
 
-  const toggleCamera = () => {
-    setFacingMode(prev => prev === 'environment' ? 'user' : 'environment');
-  };
-
   const { isInitializing, error } = useBarcodeScanner({
     onDetected: handleDetected,
     scannerEnabled: scannerEnabled,
-    facingMode: facingMode
   });
 
   const handleCloseSheet = useCallback(() => {
@@ -111,16 +113,6 @@ const Scan = ({ userGoal }) => {
         isSearching={isSearching}
         detectedBarcode={detectedBarcode}
       />
-
-      {/* Floating Camera Toggle */}
-      <div className="absolute top-12 right-6 z-40 flex flex-col gap-4">
-        <button 
-          onClick={toggleCamera}
-          className="w-12 h-12 rounded-full glass-panel border border-white/10 flex items-center justify-center text-white/70 hover:text-primary transition-colors shadow-2xl"
-        >
-          <span className="material-symbols-outlined">{facingMode === 'environment' ? 'flip_camera_ios' : 'camera_front'}</span>
-        </button>
-      </div>
 
       {/* Comparison Mode Indicator */}
       {comparisonTarget && (
