@@ -1,12 +1,13 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, Suspense, lazy } from 'react';
 import BarcodeScanner from '../components/BarcodeScanner';
-import ProductSheet from '../components/ProductSheet';
-import ComparisonSheet from '../components/ComparisonSheet';
 import { useBarcodeScanner } from '../hooks/useBarcodeScanner';
 import { useScanHistory } from '../hooks/useScanHistory';
 import { useDailyNutrition } from '../hooks/useDailyNutrition';
 import { useAnalytics } from '../hooks/useAnalytics';
 import { processBarcode } from '../services/productEngine';
+
+const ProductSheet = lazy(() => import('../components/ProductSheet'));
+const ComparisonSheet = lazy(() => import('../components/ComparisonSheet'));
 
 const Scan = ({ userGoal }) => {
   const [detectedBarcode, setDetectedBarcode] = useState(null);
@@ -132,24 +133,28 @@ const Scan = ({ userGoal }) => {
       )}
 
       {/* Product Information Sheet */}
-      <ProductSheet 
-        product={activeProduct} 
-        barcode={detectedBarcode}
-        isOpen={isSheetOpen} 
-        onClose={handleCloseSheet}
-        onCompare={startComparison}
-        userGoal={userGoal}
-        isSearchingWeb={isSearchingWeb}
-        onWebSearch={handleWebSearch}
-      />
+      <Suspense fallback={null}>
+        <ProductSheet 
+          product={activeProduct} 
+          barcode={detectedBarcode}
+          isOpen={isSheetOpen} 
+          onClose={handleCloseSheet}
+          onCompare={startComparison}
+          userGoal={userGoal}
+          isSearchingWeb={isSearchingWeb}
+          onWebSearch={handleWebSearch}
+        />
+      </Suspense>
 
       {/* Comparison Sheet */}
-      <ComparisonSheet 
-        productA={comparisonTarget}
-        productB={activeProduct}
-        isOpen={isComparing}
-        onClose={handleCloseSheet}
-      />
+      <Suspense fallback={null}>
+        <ComparisonSheet 
+          productA={comparisonTarget}
+          productB={activeProduct}
+          isOpen={isComparing}
+          onClose={handleCloseSheet}
+        />
+      </Suspense>
     </div>
   );
 };

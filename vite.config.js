@@ -14,4 +14,31 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 4173,
   },
+  build: {
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => {
+          if (id.includes('node_modules')) {
+            if (id.includes('three') || id.includes('@react-three/fiber') || id.includes('@react-three/drei') || id.includes('@react-spring/three')) {
+              return 'three-vendor';
+            }
+            if (id.includes('@tensorflow')) {
+              return 'tensorflow-vendor';
+            }
+            if (id.includes('quagga')) {
+              return 'scanner-vendor';
+            }
+            if (id.includes('firebase')) {
+              return 'firebase-vendor';
+            }
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+              return 'react-vendor';
+            }
+            return 'vendor';
+          }
+        }
+      }
+    }
+  }
 });

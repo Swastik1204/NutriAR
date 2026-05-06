@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import Quagga from '@ericblade/quagga2';
-import ScannerFX from './ScannerFX';
+
+const ScannerFX = lazy(() => import('./ScannerFX'));
 
 const BarcodeScanner = ({ 
   isInitializing, 
@@ -51,7 +52,9 @@ const BarcodeScanner = ({
       <div id="scanner" className="absolute inset-0 w-full h-full [&>video]:w-full [&>video]:h-full [&>video]:object-cover" />
 
       {/* Fake AR Overlay */}
-      <ScannerFX isDetected={!!detectedBarcode} />
+      <Suspense fallback={null}>
+        <ScannerFX isDetected={!!detectedBarcode} />
+      </Suspense>
 
       {/* Detection Flash Overlay */}
       {showFlash && <div className="absolute inset-0 bg-white/40 z-40 pointer-events-none animate-fade-out" />}
