@@ -14,8 +14,9 @@ const ProductList = () => {
       
       if (!matchesSearch) return false;
 
-      if (filter === 'high-protein') return p.protein >= 5;
+      if (filter === 'high-protein') return p.protein >= 20;
       if (filter === 'low-sugar') return p.sugar <= 5;
+      if (filter === 'high-carb') return p.carbs >= 50;
       
       return true;
     });
@@ -44,7 +45,8 @@ const ProductList = () => {
             {[
               { id: 'all', label: 'All' },
               { id: 'high-protein', label: 'High Protein' },
-              { id: 'low-sugar', label: 'Low Sugar' }
+              { id: 'low-sugar', label: 'Low Sugar' },
+              { id: 'high-carb', label: 'High Carb' }
             ].map(f => (
               <button 
                 key={f.id}
@@ -79,18 +81,26 @@ const ProductList = () => {
                   </div>
                </div>
                
-               <div className="grid grid-cols-3 gap-4">
+               <div className="grid grid-cols-5 gap-2">
                   <div className="flex flex-col">
-                    <span className="text-xs font-bold text-white/80">{product.calories}</span>
-                    <span className="text-[8px] uppercase tracking-widest opacity-40 font-bold">kcal</span>
+                    <span className="text-[10px] font-bold text-white/80">{product.calories}</span>
+                    <span className="text-[7px] uppercase tracking-widest opacity-40 font-bold">kcal</span>
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-xs font-bold text-white/80">{product.protein}g</span>
-                    <span className="text-[8px] uppercase tracking-widest opacity-40 font-bold">Prot</span>
+                    <span className="text-[10px] font-bold text-white/80">{product.protein}g</span>
+                    <span className="text-[7px] uppercase tracking-widest opacity-40 font-bold">Prot</span>
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-xs font-bold text-white/80">{product.sugar}g</span>
-                    <span className="text-[8px] uppercase tracking-widest opacity-40 font-bold">Sugar</span>
+                    <span className="text-[10px] font-bold text-white/80">{product.carbs}g</span>
+                    <span className="text-[7px] uppercase tracking-widest opacity-40 font-bold">Carb</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-bold text-white/80">{product.fat}g</span>
+                    <span className="text-[7px] uppercase tracking-widest opacity-40 font-bold">Fat</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-bold text-white/80">{product.sugar}g</span>
+                    <span className="text-[7px] uppercase tracking-widest opacity-40 font-bold">Sugar</span>
                   </div>
                </div>
             </div>

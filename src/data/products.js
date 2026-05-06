@@ -115,5 +115,44 @@ export const products = {
     ingredients: ["Wheat Flour", "Choco Creme", "Sugar", "Vegetable Oil", "Cocoa Solids"],
     healthScore: 25,
     tags: ["high-sugar", "high-fat"]
+  },
+  "8906000000001": {
+    barcode: "8906000000001",
+    name: "Max Protein Bar",
+    brand: "RiteBite",
+    calories: 250,
+    protein: 20,
+    carbs: 30,
+    fat: 8,
+    sugar: 5,
+    ingredients: ["Protein Blend", "Fiber", "Vitamins", "Minerals", "Cocoa Butter"],
+    healthScore: 85,
+    tags: ["high-protein", "low-sugar"]
+  },
+  "0748927028669": {
+    barcode: "0748927028669",
+    name: "Gold Standard Whey",
+    brand: "Optimum Nutrition",
+    calories: 120,
+    protein: 24,
+    carbs: 3,
+    fat: 1,
+    sugar: 1,
+    ingredients: ["Whey Protein Isolate", "Whey Protein Concentrate", "Peptides", "Lecithin"],
+    healthScore: 90,
+    tags: ["high-protein", "clean"]
+  },
+  "8901262110112": {
+    barcode: "8901262110112",
+    name: "Cheese Slices",
+    brand: "Amul",
+    calories: 310,
+    protein: 20,
+    carbs: 2,
+    fat: 25,
+    sugar: 0,
+    ingredients: ["Milk", "Cheese", "Milk Solids", "Emulsifying Salts"],
+    healthScore: 65,
+    tags: ["high-protein", "dairy"]
   }
 };
