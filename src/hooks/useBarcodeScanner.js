@@ -12,7 +12,6 @@ export const useBarcodeScanner = ({ onDetected, scannerEnabled = true }) => {
   const lastScanTime = useRef(0);
   const isInitialized = useRef(false);
   const quaggaActive = useRef(false);
-  const scannerRef = useRef(null);
 
   // Load available camera devices
   const loadDevices = useCallback(async () => {
@@ -43,6 +42,9 @@ export const useBarcodeScanner = ({ onDetected, scannerEnabled = true }) => {
   const initQuagga = useCallback((deviceId) => {
     const scannerElement = document.querySelector('#scanner');
     if (!scannerElement) return;
+
+    setError(null);
+    setIsInitializing(true);
 
     Quagga.init(
       {
@@ -80,20 +82,30 @@ export const useBarcodeScanner = ({ onDetected, scannerEnabled = true }) => {
     );
   }, [scannerEnabled]);
 
-  const restartScanner = useCallback((deviceId) => {
+  const restartScanner = useCallback(async (deviceId) => {
     try {
-      // Per user request: avoid full re-init if possible, 
-      // but in Quagga2, updating constraints requires a fresh init call for the new stream.
-      // We stop the current session first.
-      if (quaggaActive.current) {
-        Quagga.stop();
-        quaggaActive.current = false;
+      // 1. Explicitly stop current track to release hardware lock
+      const track = Quagga.CameraAccess.getActiveTrack();
+      if (track) {
+        track.stop();
       }
+
+      // 2. Stop Quagga
+      if (isInitialized.current) {
+        await Quagga.stop();
+        quaggaActive.current = false;
+        isInitialized.current = false;
+      }
+
+      // 3. Small buffer to ensure hardware is fully released by OS
+      await new Promise(resolve => setTimeout(resolve, 300));
       
+      // 4. Re-init with new device
       initQuagga(deviceId);
       localStorage.setItem(PREFERRED_CAMERA_KEY, deviceId);
     } catch (err) {
       console.error("Camera switch failed", err);
+      setError(err);
     }
   }, [initQuagga]);
 
@@ -123,10 +135,7 @@ export const useBarcodeScanner = ({ onDetected, scannerEnabled = true }) => {
 
   // Initial setup
   useEffect(() => {
-    loadDevices().then(() => {
-      // The devices state might not be updated yet, so we use the local variable in loadDevices 
-      // or we let another useEffect handle the initial Quagga init based on currentDeviceIndex.
-    });
+    loadDevices();
 
     const handleDetected = (data) => {
       if (!data || !data.codeResult || !data.codeResult.code) return;
@@ -152,10 +161,10 @@ export const useBarcodeScanner = ({ onDetected, scannerEnabled = true }) => {
 
   // Initial Quagga Init once devices are loaded
   useEffect(() => {
-    if (devices.length > 0 && !isInitialized.current) {
+    if (devices.length > 0 && !isInitialized.current && !error) {
       initQuagga(devices[currentDeviceIndex].deviceId);
     }
-  }, [devices, currentDeviceIndex, initQuagga]);
+  }, [devices, currentDeviceIndex, initQuagga, error]);
 
   // Toggle start/stop based on scannerEnabled prop
   useEffect(() => {
