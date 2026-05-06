@@ -46,7 +46,7 @@ export const getHealthBg = (score) => {
   return 'bg-error';
 };
 
-export const generateInsights = (nutrients) => {
+export const generateBasicInsights = (nutrients) => {
   const insights = [];
   const { calories, protein, fat, carbs } = nutrients;
 

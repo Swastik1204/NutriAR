@@ -9,13 +9,48 @@ import ErrorBoundary from './components/ErrorBoundary';
 
 const GOAL_KEY = 'nutriar_user_goal_v2';
 
+const safeLocalStorageSet = (key, value) => {
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch (e) {
+    if (e.name === 'QuotaExceededError') {
+      console.error('LocalStorage quota exceeded, attempting to clear old data');
+      try {
+        localStorage.removeItem(key);
+        localStorage.setItem(key, value);
+        return true;
+      } catch (retryError) {
+        console.error('Failed to save to localStorage even after clearing:', retryError);
+        return false;
+      }
+    }
+    console.error('Failed to save to localStorage:', e);
+    return false;
+  }
+};
+
 function AppContent() {
-  const [userGoal, setUserGoal] = useState(localStorage.getItem(GOAL_KEY) || 'balanced');
-  const [showGoalPicker, setShowGoalPicker] = useState(!localStorage.getItem(GOAL_KEY));
+  const [userGoal, setUserGoal] = useState(() => {
+    try {
+      return localStorage.getItem(GOAL_KEY) || 'balanced';
+    } catch (e) {
+      console.error('Failed to read user goal from localStorage:', e);
+      return 'balanced';
+    }
+  });
+  const [showGoalPicker, setShowGoalPicker] = useState(() => {
+    try {
+      return !localStorage.getItem(GOAL_KEY);
+    } catch (e) {
+      console.error('Failed to check goal in localStorage:', e);
+      return false;
+    }
+  });
 
   const selectGoal = (goal) => {
     setUserGoal(goal);
-    localStorage.setItem(GOAL_KEY, goal);
+    safeLocalStorageSet(GOAL_KEY, goal);
     setShowGoalPicker(false);
   };
 

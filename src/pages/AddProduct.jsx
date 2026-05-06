@@ -16,14 +16,53 @@ const AddProduct = () => {
     sugar: '',
     ingredients: ''
   });
+  const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    // Clear error for this field when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    
+    if (!formData.name.trim()) newErrors.name = 'Product name is required';
+    if (!formData.brand.trim()) newErrors.brand = 'Brand is required';
+    
+    const calories = Number(formData.calories);
+    if (isNaN(calories) || calories < 0) newErrors.calories = 'Valid calorie count required';
+    if (calories > 10000) newErrors.calories = 'Calories seem too high';
+    
+    const protein = Number(formData.protein);
+    if (isNaN(protein) || protein < 0) newErrors.protein = 'Valid protein amount required';
+    if (protein > 1000) newErrors.protein = 'Protein amount seems too high';
+    
+    const carbs = Number(formData.carbs);
+    if (isNaN(carbs) || carbs < 0) newErrors.carbs = 'Valid carbs amount required';
+    if (carbs > 1000) newErrors.carbs = 'Carbs amount seems too high';
+    
+    const fat = Number(formData.fat);
+    if (isNaN(fat) || fat < 0) newErrors.fat = 'Valid fat amount required';
+    if (fat > 500) newErrors.fat = 'Fat amount seems too high';
+    
+    const sugar = Number(formData.sugar);
+    if (isNaN(sugar) || sugar < 0) newErrors.sugar = 'Valid sugar amount required';
+    if (sugar > 500) newErrors.sugar = 'Sugar amount seems too high';
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
     
     const product = {
       ...formData,
@@ -64,12 +103,30 @@ const AddProduct = () => {
 
           <div className="form-control w-full">
             <label className="label"><span className="label-text text-[10px] font-bold uppercase tracking-widest opacity-50">Product Name</span></label>
-            <input type="text" name="name" required value={formData.name} onChange={handleChange} className="input bg-white/5 border-white/10 rounded-2xl text-white" placeholder="e.g. Greek Yogurt" />
+            <input 
+              type="text" 
+              name="name" 
+              required 
+              value={formData.name} 
+              onChange={handleChange} 
+              className={`input bg-white/5 rounded-2xl text-white ${errors.name ? 'border-error' : 'border-white/10'}`} 
+              placeholder="e.g. Greek Yogurt" 
+            />
+            {errors.name && <label className="label"><span className="label-text-alt text-error text-xs">{errors.name}</span></label>}
           </div>
 
           <div className="form-control w-full">
             <label className="label"><span className="label-text text-[10px] font-bold uppercase tracking-widest opacity-50">Brand</span></label>
-            <input type="text" name="brand" required value={formData.brand} onChange={handleChange} className="input bg-white/5 border-white/10 rounded-2xl text-white" placeholder="e.g. Chobani" />
+            <input 
+              type="text" 
+              name="brand" 
+              required 
+              value={formData.brand} 
+              onChange={handleChange} 
+              className={`input bg-white/5 rounded-2xl text-white ${errors.brand ? 'border-error' : 'border-white/10'}`} 
+              placeholder="e.g. Chobani" 
+            />
+            {errors.brand && <label className="label"><span className="label-text-alt text-error text-xs">{errors.brand}</span></label>}
           </div>
         </div>
 
@@ -77,21 +134,68 @@ const AddProduct = () => {
           <div className="glass-panel p-6 rounded-3xl space-y-4">
             <div className="form-control">
               <label className="label"><span className="label-text text-[10px] font-bold uppercase tracking-widest opacity-50">Calories</span></label>
-              <input type="number" name="calories" required value={formData.calories} onChange={handleChange} className="input bg-white/5 border-white/10 rounded-2xl text-white" placeholder="kcal" />
+              <input 
+                type="number" 
+                name="calories" 
+                required 
+                min="0" 
+                max="10000"
+                value={formData.calories} 
+                onChange={handleChange} 
+                className={`input bg-white/5 rounded-2xl text-white ${errors.calories ? 'border-error' : 'border-white/10'}`} 
+                placeholder="kcal" 
+              />
+              {errors.calories && <label className="label"><span className="label-text-alt text-error text-xs">{errors.calories}</span></label>}
             </div>
             <div className="form-control">
               <label className="label"><span className="label-text text-[10px] font-bold uppercase tracking-widest opacity-50">Protein (g)</span></label>
-              <input type="number" step="0.1" name="protein" required value={formData.protein} onChange={handleChange} className="input bg-white/5 border-white/10 rounded-2xl text-white" placeholder="g" />
+              <input 
+                type="number" 
+                step="0.1" 
+                name="protein" 
+                required 
+                min="0" 
+                max="1000"
+                value={formData.protein} 
+                onChange={handleChange} 
+                className={`input bg-white/5 rounded-2xl text-white ${errors.protein ? 'border-error' : 'border-white/10'}`} 
+                placeholder="g" 
+              />
+              {errors.protein && <label className="label"><span className="label-text-alt text-error text-xs">{errors.protein}</span></label>}
             </div>
           </div>
           <div className="glass-panel p-6 rounded-3xl space-y-4">
             <div className="form-control">
               <label className="label"><span className="label-text text-[10px] font-bold uppercase tracking-widest opacity-50">Carbs (g)</span></label>
-              <input type="number" step="0.1" name="carbs" required value={formData.carbs} onChange={handleChange} className="input bg-white/5 border-white/10 rounded-2xl text-white" placeholder="g" />
+              <input 
+                type="number" 
+                step="0.1" 
+                name="carbs" 
+                required 
+                min="0" 
+                max="1000"
+                value={formData.carbs} 
+                onChange={handleChange} 
+                className={`input bg-white/5 rounded-2xl text-white ${errors.carbs ? 'border-error' : 'border-white/10'}`} 
+                placeholder="g" 
+              />
+              {errors.carbs && <label className="label"><span className="label-text-alt text-error text-xs">{errors.carbs}</span></label>}
             </div>
             <div className="form-control">
               <label className="label"><span className="label-text text-[10px] font-bold uppercase tracking-widest opacity-50">Fat (g)</span></label>
-              <input type="number" step="0.1" name="fat" required value={formData.fat} onChange={handleChange} className="input bg-white/5 border-white/10 rounded-2xl text-white" placeholder="g" />
+              <input 
+                type="number" 
+                step="0.1" 
+                name="fat" 
+                required 
+                min="0" 
+                max="500"
+                value={formData.fat} 
+                onChange={handleChange} 
+                className={`input bg-white/5 rounded-2xl text-white ${errors.fat ? 'border-error' : 'border-white/10'}`} 
+                placeholder="g" 
+              />
+              {errors.fat && <label className="label"><span className="label-text-alt text-error text-xs">{errors.fat}</span></label>}
             </div>
           </div>
         </div>
@@ -99,7 +203,19 @@ const AddProduct = () => {
         <div className="glass-panel p-6 rounded-3xl space-y-4">
           <div className="form-control w-full">
             <label className="label"><span className="label-text text-[10px] font-bold uppercase tracking-widest opacity-50">Sugar (g)</span></label>
-            <input type="number" step="0.1" name="sugar" required value={formData.sugar} onChange={handleChange} className="input bg-white/5 border-white/10 rounded-2xl text-white" placeholder="g" />
+            <input 
+              type="number" 
+              step="0.1" 
+              name="sugar" 
+              required 
+              min="0" 
+              max="500"
+              value={formData.sugar} 
+              onChange={handleChange} 
+              className={`input bg-white/5 rounded-2xl text-white ${errors.sugar ? 'border-error' : 'border-white/10'}`} 
+              placeholder="g" 
+            />
+            {errors.sugar && <label className="label"><span className="label-text-alt text-error text-xs">{errors.sugar}</span></label>}
           </div>
           <div className="form-control w-full">
             <label className="label"><span className="label-text text-[10px] font-bold uppercase tracking-widest opacity-50">Ingredients (comma separated)</span></label>

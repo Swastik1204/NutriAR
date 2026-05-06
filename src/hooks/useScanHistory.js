@@ -2,6 +2,28 @@ import { useState, useEffect, useCallback } from 'react';
 
 const HISTORY_KEY = 'nutriar_scan_history_v3';
 
+const safeLocalStorageSet = (key, value) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+    return true;
+  } catch (e) {
+    if (e.name === 'QuotaExceededError') {
+      console.error('LocalStorage quota exceeded, attempting to clear old data');
+      // Try to clear old history to make space
+      try {
+        localStorage.removeItem(key);
+        localStorage.setItem(key, JSON.stringify(value));
+        return true;
+      } catch (retryError) {
+        console.error('Failed to save to localStorage even after clearing:', retryError);
+        return false;
+      }
+    }
+    console.error('Failed to save to localStorage:', e);
+    return false;
+  }
+};
+
 export const useScanHistory = (limit = 5) => {
   const [history, setHistory] = useState([]);
 
@@ -33,7 +55,7 @@ export const useScanHistory = (limit = 5) => {
         ...filtered
       ].slice(0, limit);
       
-      localStorage.setItem(HISTORY_KEY, JSON.stringify(newHistory));
+      safeLocalStorageSet(HISTORY_KEY, newHistory);
       return newHistory;
     });
   }, [limit]);
@@ -41,14 +63,18 @@ export const useScanHistory = (limit = 5) => {
   const removeFromHistory = useCallback((barcode) => {
     setHistory(prev => {
       const newHistory = prev.filter(item => item.barcode !== barcode);
-      localStorage.setItem(HISTORY_KEY, JSON.stringify(newHistory));
+      safeLocalStorageSet(HISTORY_KEY, newHistory);
       return newHistory;
     });
   }, []);
 
   const clearHistory = useCallback(() => {
     setHistory([]);
-    localStorage.removeItem(HISTORY_KEY);
+    try {
+      localStorage.removeItem(HISTORY_KEY);
+    } catch (e) {
+      console.error('Failed to clear history from localStorage:', e);
+    }
   }, []);
 
   return { history, saveToHistory, removeFromHistory, clearHistory };

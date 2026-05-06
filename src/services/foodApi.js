@@ -32,7 +32,30 @@ const normalizeProductData = (p, barcode) => {
 
 export const fetchProductFromOFF = async (barcode) => {
   try {
-    const response = await fetch(`${BASE_URL}/${barcode}.json`);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+    const response = await fetch(`${BASE_URL}/${barcode}.json`, {
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'NutriAR/1.0 (nutrition-scanner-app)'
+      }
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        console.log(`Product ${barcode} not found in Open Food Facts`);
+        return null;
+      }
+      if (response.status === 429) {
+        console.warn('Open Food Facts rate limit exceeded');
+        return null;
+      }
+      throw new Error(`Open Food Facts API returned ${response.status}`);
+    }
+
     const data = await response.json();
 
     if (data.status === 1 && data.product) {
@@ -40,7 +63,13 @@ export const fetchProductFromOFF = async (barcode) => {
     }
     return null;
   } catch (error) {
-    console.error('Error fetching from Open Food Facts:', error);
+    if (error.name === 'AbortError') {
+      console.error('Open Food Facts request timeout:', barcode);
+    } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      console.error('Network error fetching from Open Food Facts:', error);
+    } else {
+      console.error('Error fetching from Open Food Facts:', error);
+    }
     return null;
   }
 };

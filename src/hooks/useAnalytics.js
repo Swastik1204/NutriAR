@@ -2,6 +2,27 @@ import { useState, useEffect, useCallback } from 'react';
 
 const ANALYTICS_KEY = 'nutriar_analytics_v1';
 
+const safeLocalStorageSet = (key, value) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+    return true;
+  } catch (e) {
+    if (e.name === 'QuotaExceededError') {
+      console.error('LocalStorage quota exceeded, attempting to clear old data');
+      try {
+        localStorage.removeItem(key);
+        localStorage.setItem(key, JSON.stringify(value));
+        return true;
+      } catch (retryError) {
+        console.error('Failed to save to localStorage even after clearing:', retryError);
+        return false;
+      }
+    }
+    console.error('Failed to save to localStorage:', e);
+    return false;
+  }
+};
+
 export const useAnalytics = () => {
   const [stats, setStats] = useState({
     totalScans: 0,
@@ -13,7 +34,13 @@ export const useAnalytics = () => {
 
   useEffect(() => {
     const saved = localStorage.getItem(ANALYTICS_KEY);
-    if (saved) setStats(JSON.parse(saved));
+    if (saved) {
+      try {
+        setStats(JSON.parse(saved));
+      } catch (e) {
+        console.error('Failed to parse analytics data', e);
+      }
+    }
   }, []);
 
   const trackScan = useCallback((score, source, isOffline) => {
@@ -25,7 +52,7 @@ export const useAnalytics = () => {
         offlineScans: isOffline ? prev.offlineScans + 1 : prev.offlineScans,
         averageHealthScore: Math.round(((prev.averageHealthScore * prev.totalScans) + score) / (prev.totalScans + 1))
       };
-      localStorage.setItem(ANALYTICS_KEY, JSON.stringify(newStats));
+      safeLocalStorageSet(ANALYTICS_KEY, newStats);
       return newStats;
     });
   }, []);
